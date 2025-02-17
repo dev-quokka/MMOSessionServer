@@ -6,6 +6,7 @@
 
 #include "UserProcessor.h"
 #include "ServerProcessor.h"
+#include "MySQLManager.h"
 
 constexpr uint16_t threadCnt = 1;
 
@@ -28,10 +29,12 @@ int main() {
         std::cout << "Redis 에러 발생: " << err.what() << std::endl;
     }
 
+    MySQLManager* mysqlManager = new MySQLManager;
+
     UserProcessor userProcessor;
     ServerProcessor serverProcessor;
 
-	userProcessor.init(threadCnt, redis);
+    serverProcessor.init(threadCnt, redis, mysqlManager);
 
 
 }

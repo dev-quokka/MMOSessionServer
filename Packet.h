@@ -71,139 +71,7 @@ struct SYNCRONIZE_DISCONNECT_REQUEST : PACKET_HEADER {
 	uint16_t userPk;
 };
 
-//  ---------------------------- USER STATUS  ----------------------------
-
-struct EXP_UP_REQUEST : PACKET_HEADER {
-	short mobNum; // Number of Mob
-};
-
-struct EXP_UP_RESPONSE : PACKET_HEADER {
-	unsigned int expUp;
-};
-
-struct LEVEL_UP_RESPONSE : PACKET_HEADER {
-	uint16_t increaseLevel;
-	unsigned int currentExp;
-};
-
-//  ---------------------------- INVENTORY  ----------------------------
-
-struct ADD_ITEM_REQUEST : PACKET_HEADER {
-	uint16_t itemType; // (Max 3)
-	uint16_t itemSlotPos; // (Max 50)
-	uint16_t itemCount; // (Max 99)
-	short itemCode; // (Max 5000)
-};
-
-struct ADD_ITEM_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-struct DEL_ITEM_REQUEST : PACKET_HEADER {
-	uint16_t itemType; // (Max 3)
-	uint16_t itemSlotPos; // (Max 50)
-	short itemCode; // (Max 5000)
-};
-
-struct DEL_ITEM_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-struct MOD_ITEM_REQUEST : PACKET_HEADER {
-	uint16_t itemType; // (Max 3)
-	uint16_t itemSlotPos; // (Max 50)
-	int8_t itemCount; // (Max 99)
-	short itemCode; // (Max 5000)
-};
-
-struct MOD_ITEM_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-struct MOV_ITEM_REQUEST : PACKET_HEADER {
-	uint16_t dragItemType; // (Max 3)
-	uint16_t dragItemSlotPos; // (Max 50)
-	uint16_t dragItemCount; // (Max 99)
-	uint16_t targetItemType; // (Max 3)
-	uint16_t targetItemSlotPos; // (Max 50)
-	uint16_t targetItemCount; // (Max 99)
-	short dragItemCode; // (Max 5000)
-	short targetItemCode; // (Max 5000)
-};
-
-struct MOV_ITEM_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-//  ---------------------------- INVENTORY:EQUIPMENT  ----------------------------
-
-struct ADD_EQUIPMENT_REQUEST : PACKET_HEADER {
-	uint16_t itemType; // (Max 3)
-	uint16_t itemSlotPos; // (Max 50)
-	uint16_t currentEnhanceCount; // (Max 20)
-	short itemCode; // (Max 5000)
-};
-
-struct ADD_EQUIPMENT_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-struct DEL_EQUIPMENT_REQUEST : PACKET_HEADER {
-	uint16_t itemType; // (Max 3)
-	uint16_t itemSlotPos; // (Max 50)
-	short itemCode; // (Max 5000)
-};
-
-struct DEL_EQUIPMENT_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-struct ENH_EQUIPMENT_REQUEST : PACKET_HEADER {
-	uint16_t itemType; // (Max 3)
-	uint16_t itemSlotPos; // (Max 50)
-	uint16_t currentEnhanceCount; // (Max 10)
-	short itemCode; // (Max 5000)
-};
-
-struct ENH_EQUIPMENT_RESPONSE : PACKET_HEADER {
-	bool isSuccess;
-};
-
-
 //  ---------------------------- RAID  ----------------------------
-
-struct RAID_MATCHING_REQUEST : PACKET_HEADER { // Users Matching Request
-
-};
-
-struct RAID_MATCHING_RESPONSE : PACKET_HEADER {
-	bool insertSuccess; // Insert Into Matching Queue Check
-};
-
-struct RAID_READY_REQUEST : PACKET_HEADER {
-	uint16_t timer; // Minutes
-	uint16_t roomNum; // If Max RoomNum Up to Short Range, Back to Number One
-	uint16_t yourNum;
-	uint16_t udpPort;   // Server UDP Port Num
-	unsigned int mobHp;
-	char serverIP[16]; // Server IP Address
-};
-
-struct RAID_TEAMINFO_REQUEST : PACKET_HEADER { // User To Server
-	bool imReady;
-	uint16_t roomNum;
-	uint16_t myNum;
-	sockaddr_in userAddr;// 유저가 만든 udp 소켓의 sockaddr_in 전달
-};
-
-struct RAID_TEAMINFO_RESPONSE : PACKET_HEADER {
-	uint16_t teamLevel;
-	std::string teamId;
-};
-
-struct RAID_START_REQUEST : PACKET_HEADER {
-	std::chrono::time_point<std::chrono::steady_clock> endTime;
-};
 
 struct RAID_HIT_REQUEST : PACKET_HEADER {
 	uint16_t roomNum;
@@ -240,11 +108,8 @@ enum class PACKET_ID : uint16_t {
 	USER_LOGOUT_REQUEST = 3, // 유저는 3번으로 요청 
 	IM_WEB_REQUEST = 4, // 유저는 1번으로 요청 
 	IM_WEB_RESPONSE = 5,
-	SYNCRONIZE_LEVEL_REQUEST = 6, // SERVER TO WEB SERVER
-	SYNCRONIZE_LOGOUT_REQUEST = 7, // SERVER TO WEB SERVER
-	SYNCRONIZE_DISCONNECT_REQUEST = 8, // SERVER TO WEB SERVER
-	USER_FULL_REQUEST = 9, // SERVER TO USER
-	WAITTING_NUMBER_REQUSET = 10, // SERVER TO USER
+	USER_FULL_REQUEST = 6, // SERVER TO USER
+	WAITTING_NUMBER_REQUSET = 7, // SERVER TO USER
 
 	// USER STATUS (21~)
 	EXP_UP_REQUEST = 21,  // 유저는 4번으로 요청 
@@ -283,4 +148,10 @@ enum class PACKET_ID : uint16_t {
 	RAID_END_RESPONSE = 54,
 	RAID_RANKING_REQUEST = 55, // 유저는 16번으로 요청 
 	RAID_RANKING_RESPONSE = 56,
+
+	// WebServer Syncronizing Packet Id (101~)
+	SYNCRONIZE_LEVEL_REQUEST = 101, // SERVER TO WEB SERVER
+	SYNCRONIZE_LOGOUT_REQUEST = 102, // SERVER TO WEB SERVER
+	SYNCRONIZE_DISCONNECT_REQUEST = 103, // SERVER TO WEB SERVER
+
 };
