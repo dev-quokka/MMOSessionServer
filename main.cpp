@@ -8,7 +8,7 @@
 #include "ServerProcessor.h"
 #include "MySQLManager.h"
 
-constexpr uint16_t threadCnt = 1;
+constexpr uint16_t serverThreadCnt = 1;
 
 int main() {
 	std::shared_ptr<sw::redis::RedisCluster> redis;
@@ -30,11 +30,14 @@ int main() {
     }
 
     MySQLManager* mysqlManager = new MySQLManager;
+    mysqlManager->Run(redis);
 
     UserProcessor userProcessor;
     ServerProcessor serverProcessor;
 
-    serverProcessor.init(threadCnt, redis, mysqlManager);
+    serverProcessor.init(serverThreadCnt, redis, mysqlManager);
+
+    delete mysqlManager;
 
 
 }

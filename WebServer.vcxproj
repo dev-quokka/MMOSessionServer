@@ -108,13 +108,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\82104\jwt-cpp-master\include;C:\Users\82104\OpenSSL-Win64\include;C:\Users\82104\hiredis\Build\hiredis_install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\82104\boost_1_87_0;C:\Users\82104\jwt-cpp-master\include;C:\Users\82104\OpenSSL-Win64\include;C:\Users\82104\hiredis\Build\hiredis_install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\82104\OpenSSL-Win64\lib;C:\Users\82104\hiredis\Build\hiredis_install\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\82104\boost_1_87_0;C:\Users\82104\OpenSSL-Win64\lib;C:\Users\82104\hiredis\Build\hiredis_install\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>C:\Users\82104\hiredis\Build\hiredis_install\lib\redis++.lib;C:\Users\82104\hiredis\Build\hiredis_install\lib\hiredisd.lib;C:\Users\82104\hiredis\Build\hiredis_install\lib\redis++_static.lib;C:\Program Files\MySQL\MySQL Server 8.0\lib\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

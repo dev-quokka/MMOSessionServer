@@ -9,21 +9,6 @@
 
 const uint16_t PACKET_ID_SIZE = 57; // Last Packet_ID Num + 1
 
-struct DataPacket {
-	uint32_t dataSize;
-	SOCKET userSkt;
-	DataPacket(uint32_t dataSize_, SOCKET userSkt_) : dataSize(dataSize_), userSkt(userSkt_) {}
-	DataPacket() = default;
-};
-
-struct PacketInfo
-{
-	uint16_t packetId = 0;
-	uint16_t dataSize = 0;
-	SOCKET userSkt = 0;
-	char* pData = nullptr;
-};
-
 struct PACKET_HEADER
 {
 	uint16_t PacketLength;
@@ -31,23 +16,7 @@ struct PACKET_HEADER
 	std::string userToken; // userToken For User Check
 };
 
-
 //  ---------------------------- SYSTEM  ----------------------------
-
-struct USER_CONNECT_REQUEST_PACKET : PACKET_HEADER {
-	uint16_t level;
-	uint16_t userPk;
-	unsigned int currentExp;
-	std::string userId;
-};
-
-struct USER_CONNECT_RESPONSE_PACKET : PACKET_HEADER {
-	bool isSuccess;
-};
-
-struct USER_LOGOUT_REQUEST_PACKET : PACKET_HEADER {
-
-};
 
 struct IM_WEB_REQUEST : PACKET_HEADER {
 
@@ -67,8 +36,12 @@ struct SYNCRONIZE_LOGOUT_REQUEST : PACKET_HEADER {
 	uint16_t userPk;
 };
 
-struct SYNCRONIZE_DISCONNECT_REQUEST : PACKET_HEADER {
-	uint16_t userPk;
+struct USER_GAMESTART_REQUEST : PACKET_HEADER {
+	std::string userId;
+};
+
+struct USER_GAMESTART_RESPONSE : PACKET_HEADER {
+
 };
 
 //  ---------------------------- RAID  ----------------------------
@@ -99,6 +72,14 @@ struct RAID_RANKING_REQUEST : PACKET_HEADER {
 
 struct RAID_RANKING_RESPONSE : PACKET_HEADER {
 	std::vector<std::pair<std::string, unsigned int>> reqScore;
+};
+
+enum class WEBPACKET_ID : uint16_t {
+	USER_LOGIN_REQUEST = 1,
+	USER_LOGIN_RESPONSE = 2,
+	USER_GAMESTART_REQUEST = 3,
+	USER_GAMESTART_RESPONSE = 4
+
 };
 
 enum class PACKET_ID : uint16_t {

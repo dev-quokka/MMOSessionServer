@@ -1,7 +1,8 @@
 #pragma once
 
 #define SERVER_IP "127.0.0.1"
-#define TO_USER_PORT 9001
+#define SERVER_PORT 8080
+#define PACKET_SIZE 1024
 
 #include <winsock2.h>
 #include <windows.h>
@@ -21,6 +22,13 @@
 
 class ServerProcessor {
 public:
+    ~ServerProcessor() {
+        if (serverProcThread.joinable()) {
+            serverProcThread.join();
+        }
+        std::cout << "Server Proc Thread End" << std::endl;
+    }
+
 	bool init(int16_t threadCnt_, std::shared_ptr<sw::redis::RedisCluster> redis_, MySQLManager* mysqlManager_) {
         WSADATA wsadata;
         int check = 0;
@@ -59,7 +67,7 @@ public:
             .set_subject("WebServer")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        if (!redis->hset("JWT_CHECK", webToken, "0")) {
+        if (!redis->hset("JWT_CHECK", webToken, "4")) { // 웹서버 pk는 4번
             std::cout << "Fail to Insert WebToken in Redis" << std::endl;
             return false;
         }
@@ -92,7 +100,7 @@ public:
         mysqlManager = mysqlManager_;
 	}
 
-    bool ConnUserRecv() {
+    bool ConnUserRecv() { // 연속 요청 막아두기
         DWORD dwFlag = 0;
         DWORD dwRecvBytes = 0;
 
@@ -116,7 +124,7 @@ public:
 
     void CreateServerProcThread(int16_t threadCnt_) {
         serverProcRun = true;
-        std::thread([this]() {WorkRun();});
+        serverProcThread = std::thread([this]() {WorkRun();});
     }
 
     void WorkRun() {
@@ -141,20 +149,26 @@ public:
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LEVEL_REQUEST*>(overlappedTCP->wsaBuf.buf);
                     
                     if (mysqlManager->SyncLevel(pakcet->userPk, pakcet->level, pakcet->currentExp)) { 
-                        std::cout << "Level Sync Success" << std::endl;
+                        std::cout << "Sync UserLevel Success" << std::endl;
                     }
+
+                    delete[] overlappedTCP->wsaBuf.buf;
+                    delete overlappedTCP;
+
+                    ConnUserRecv();
 
                 }
                 else if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LOGOUT_REQUEST) {
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LOGOUT_REQUEST*>(overlappedTCP->wsaBuf.buf);
 
+                    if (mysqlManager->SyncUserInfo(pakcet->userPk)) {
+                        std::cout << "Sync UserInfo Success" << std::endl;
+                    }
 
+                    delete[] overlappedTCP->wsaBuf.buf;
+                    delete overlappedTCP;
 
-                }
-                else if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_DISCONNECT_REQUEST) {
-                    auto pakcet = reinterpret_cast<SYNCRONIZE_DISCONNECT_REQUEST*>(overlappedTCP->wsaBuf.buf);
-
-
+                    ConnUserRecv();
 
                 }
             }
@@ -170,6 +184,8 @@ private:
     SOCKET serverIOSkt;
     HANDLE IOCPHandle;
     MySQLManager* mysqlManager;
+
+    std::thread serverProcThread; 
 
     std::shared_ptr<sw::redis::RedisCluster> redis;
 
