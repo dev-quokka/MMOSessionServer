@@ -67,10 +67,15 @@ public:
             .set_subject("WebServer")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        if (!redis->hset("JWT_CHECK", webToken, "4")) { // 웹서버 pk는 4번
-            std::cout << "Fail to Insert WebToken in Redis" << std::endl;
-            return false;
-        }
+        std::string tag = "{" + std::to_string(4) + "}"; // 웹서버 PK는 4
+        std::string key = "jwtcheck:" + tag; // user:{pk}
+
+        auto pipe = redis->pipeline(tag);
+
+        pipe.hset(key, webToken, std::to_string(4))
+            .expire(key, 3600); // set ttl 1 hour
+
+        pipe.exec();
 
         send(serverIOSkt, webToken.c_str(), webToken.size(), 0);
         recv(serverIOSkt, recvBuf, PACKET_SIZE, 0);

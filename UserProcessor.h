@@ -174,7 +174,7 @@ public:
                 if (k->PacketId == (uint16_t)WEBPACKET_ID::USER_GAMESTART_REQUEST) {
                     auto ugReq = reinterpret_cast<USER_GAMESTART_REQUEST*>(overlappedTCP->wsaBuf.buf);
                     GameStart(ugReq);
-                    std::cout << ugReq->userId << " Req Game Start" << std::endl;
+                    std::cout << ugReq->userId << " Game Start Request" << std::endl;
                 }
 
                 ZeroMemory(overlappedTCP,sizeof(OverlappedTCP)); // Push After Init
@@ -207,8 +207,9 @@ public:
         }
 
         std::string token = jwt::create()
+            .set_algorithm("HS256")
             .set_issuer("web_server")
-            .set_subject("WebServer")
+            .set_subject("Login_check")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
         std::string tag = "{" + std::to_string(pk) + "}";
@@ -216,10 +217,6 @@ public:
 
         auto pipe = redis->pipeline(tag);
 
-        if (!redis->hset("jwtcheck", token, std::to_string(pk))) { // 웹서버 pk는 4번
-            std::cout << "Fail to Insert WebToken in Redis" << std::endl;
-            return;
-        }
         pipe.hset(key, token, std::to_string(pk))
             .expire(key, 3600); // set ttl 1 hour
 
