@@ -29,7 +29,9 @@ int main() {
     }
 
     MySQLManager* mysqlManager = new MySQLManager;
-    mysqlManager->Run(redis);
+    if (!mysqlManager->Run(redis)) {
+        return 0;
+    }
 
     // UserProcessor userProcessor;
     ServerProcessor serverProcessor;
@@ -39,6 +41,14 @@ int main() {
     }
     else {
         std::cout << "Fail To Make ServerProc" << std::endl;
+    }
+
+    std::cout << "If You Want Exit, Write web" << std::endl;
+    std::string k = "";
+
+    while (1) {
+        std::cin >> k;
+        if (k == "web") break;
     }
 
     delete mysqlManager;

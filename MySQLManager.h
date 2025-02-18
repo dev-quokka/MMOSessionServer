@@ -34,17 +34,20 @@ public:
 		mysql_close(ConnPtr);
 	}
 
-	void Run(std::shared_ptr<sw::redis::RedisCluster> redis_) {
+	bool Run(std::shared_ptr<sw::redis::RedisCluster> redis_) {
 		redis = redis_;
 
 		mysql_init(&Conn);
-		ConnPtr = mysql_real_connect(&Conn, "127.0.0.1", "quokka", "1234", "Quokka", 3306, (char*)NULL, 0);
+		ConnPtr = mysql_real_connect(&Conn, "127.0.0.1", "quokka", "1234", "iocp", 3306, (char*)NULL, 0);
 
 		if (ConnPtr == NULL) {
+			std::cout << mysql_error(&Conn) << std::endl;
 			std::cout << "Mysql Connect Fail" << std::endl;
+			return false;
 		}
 
 		std::cout << "Mysql Connect Success" << std::endl;
+		return true;
 	}
 
 	bool SyncLevel(uint16_t userPk, uint16_t level, unsigned int currentExp) {
@@ -81,7 +84,7 @@ public:
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
 				userInfo.userPk = (uint32_t)std::stoi(Row[0]);
-				userInfo.userLevel = (uint16_t)(Row[1]);
+				userInfo.userLevel = (uint16_t)std::stoi(Row[1]);
 				userInfo.userExp = (unsigned int)std::stoi(Row[2]);
 				userInfo.lastLogin = std::stoi(Row[3]);
 			}

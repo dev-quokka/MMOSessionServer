@@ -4,13 +4,13 @@
 #define SERVER_PORT 9090
 #define PACKET_SIZE 1024
 
+#include <jwt-cpp/jwt.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
 #include <string>
 #include <thread>
-#include <jwt-cpp/jwt.h>
 #include <sw/redis++/redis++.h>
 
 #include "Packet.h"
@@ -27,7 +27,7 @@ public:
         }
         CloseHandle(IOCPHandle);
         closesocket(serverIOSkt);
-
+        WSACleanup();
         std::cout << "Server Proc Thread End" << std::endl;
     }
 
@@ -56,9 +56,11 @@ public:
 
         std::cout << "서버 연결중" << std::endl;
 
-        if (!connect(serverIOSkt, (SOCKADDR*)&addr, sizeof(addr))) {
-            std::cout << "서버와 연결완료" << std::endl << std::endl;
-        }
+        connect(serverIOSkt, (SOCKADDR*)&addr, sizeof(addr));
+
+        std::cout << "서버와 연결완료" << std::endl << std::endl;
+
+        redis = redis_;
 
         IM_WEB_REQUEST iwReq;
         iwReq.PacketId = (UINT16)PACKET_ID::IM_WEB_REQUEST;
@@ -69,13 +71,23 @@ public:
             .set_subject("ServerConnect")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
+        std::cout << "웹 토큰 생성 성공" << std::endl;
+
+        if (!redis) {
+            std::cerr << "redis is nullptr!" << std::endl;
+        }
+
         auto pipe = redis->pipeline("jwtcheck");
 
         pipe.hset("jwtcheck", webToken, std::to_string(4))
             .expire("jwtcheck", 3600); // set ttl 1 hour
 
         pipe.exec();
+        std::cout << "파이프로 웹서버 토큰과 pk 전송" << std::endl;
+
         iwReq.webToken = webToken;
+
+        std::cout << "웹서버 토큰으로 서버에게 접속 요청" << std::endl;
 
         send(serverIOSkt, (char*)&iwReq, sizeof(iwReq), 0);
         recv(serverIOSkt, recvBuf, PACKET_SIZE, 0);

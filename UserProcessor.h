@@ -6,6 +6,7 @@
 #define SEND_QUEUE_CNT 5
 #define MAX_OVERLAP_CNT 10
 
+#include <jwt-cpp/jwt.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
@@ -13,7 +14,6 @@
 #include <string>
 #include <thread>
 #include <atomic>
-#include <jwt-cpp/jwt.h>
 #include <sw/redis++/redis++.h>
 #include <boost/lockfree/queue.hpp>
 
@@ -31,7 +31,7 @@ public:
         }
         CloseHandle(IOCPHandle);
         closesocket(userIOSkt);
-
+        WSACleanup();
         std::cout << "userProcThread End" << std::endl;
     }
 
