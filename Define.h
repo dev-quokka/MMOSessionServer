@@ -1,6 +1,6 @@
 #pragma once
 #define WIN32_LEAN_AND_MEAN 
-#define JWT_SECRET "quokka_lover"
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
@@ -8,6 +8,8 @@
 
 const uint32_t MAX_SOCK = 1024; // Set Max Socket Buf
 const uint32_t MAX_RECV_DATA = 8096;
+
+std::string JWT_SECRET = "quokka_lover";
 
 enum class TaskType {
 	ACCEPT,

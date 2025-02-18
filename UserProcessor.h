@@ -1,4 +1,5 @@
 #pragma once
+
 #define SERVER_IP "127.0.0.1"
 #define TO_USER_PORT 9001
 #define PACKET_SIZE 1024
@@ -28,6 +29,9 @@ public:
         if (userProcThread.joinable()) {
             userProcThread.join();
         }
+        CloseHandle(IOCPHandle);
+        closesocket(userIOSkt);
+
         std::cout << "userProcThread End" << std::endl;
     }
 
@@ -116,7 +120,7 @@ public:
         }
 
         else {
-            std::cout << "Recv Fail, OverLappend Pool Full" << std::endl;
+            std::cout << "Recv Fail, OverLapped Pool Full" << std::endl;
             return false;
         }
     }
@@ -156,7 +160,7 @@ public:
         DWORD dwIoSize = 0;
         bool gqSucces = TRUE;
 
-        while (WorkRun) {
+        while (userProcRun) {
             gqSucces = GetQueuedCompletionStatus(
                 IOCPHandle,
                 &dwIoSize,
@@ -207,7 +211,6 @@ public:
         }
 
         std::string token = jwt::create()
-            .set_algorithm("HS256")
             .set_issuer("web_server")
             .set_subject("Login_check")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });

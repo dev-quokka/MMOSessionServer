@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-
 #include <sw/redis++/redis++.h>
 
 #include "UserProcessor.h"
@@ -32,12 +31,16 @@ int main() {
     MySQLManager* mysqlManager = new MySQLManager;
     mysqlManager->Run(redis);
 
-    UserProcessor userProcessor;
+    // UserProcessor userProcessor;
     ServerProcessor serverProcessor;
 
-    serverProcessor.init(serverThreadCnt, redis, mysqlManager);
+    if (serverProcessor.init(serverThreadCnt, redis, mysqlManager)) {
+        std::cout << "Success To Make ServerProc" << std::endl;
+    }
+    else {
+        std::cout << "Fail To Make ServerProc" << std::endl;
+    }
 
     delete mysqlManager;
-
 
 }

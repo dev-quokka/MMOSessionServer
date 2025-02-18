@@ -13,13 +13,12 @@ struct PACKET_HEADER
 {
 	uint16_t PacketLength;
 	uint16_t PacketId;
-	std::string userToken; // userToken For User Check
 };
 
 //  ---------------------------- SYSTEM  ----------------------------
 
 struct IM_WEB_REQUEST : PACKET_HEADER {
-
+	std::string webToken;
 };
 
 struct IM_WEB_RESPONSE : PACKET_HEADER {

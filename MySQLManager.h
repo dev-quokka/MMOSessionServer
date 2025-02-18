@@ -30,7 +30,7 @@ struct UserInventory {
 class MySQLManager {
 public:
 	~MySQLManager(){
-				std::cout << "MySQL End" << std::endl;
+		std::cout << "MySQL End" << std::endl;
 		mysql_close(ConnPtr);
 	}
 

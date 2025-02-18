@@ -1,7 +1,7 @@
 #pragma once
 
 #define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 8080
+#define SERVER_PORT 9090
 #define PACKET_SIZE 1024
 
 #include <winsock2.h>
@@ -10,7 +10,6 @@
 #include <mswsock.h>
 #include <string>
 #include <thread>
-
 #include <jwt-cpp/jwt.h>
 #include <sw/redis++/redis++.h>
 
@@ -26,6 +25,9 @@ public:
         if (serverProcThread.joinable()) {
             serverProcThread.join();
         }
+        CloseHandle(IOCPHandle);
+        closesocket(serverIOSkt);
+
         std::cout << "Server Proc Thread End" << std::endl;
     }
 
@@ -42,7 +44,7 @@ public:
 
         serverIOSkt = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, NULL, WSA_FLAG_OVERLAPPED);
         if (serverIOSkt == INVALID_SOCKET) {
-            std::cout << "Server Socket 생성 실패" << std::endl;
+            std::cout << "Server Socket Make Fail" << std::endl;
             return false;
         }
 
@@ -64,26 +66,27 @@ public:
 
         webToken = jwt::create()
             .set_issuer("web_server")
-            .set_subject("WebServer")
+            .set_subject("ServerConnect")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        std::string tag = "{" + std::to_string(4) + "}"; // 웹서버 PK는 4
-        std::string key = "jwtcheck:" + tag; // user:{pk}
+        auto pipe = redis->pipeline("jwtcheck");
 
-        auto pipe = redis->pipeline(tag);
-
-        pipe.hset(key, webToken, std::to_string(4))
-            .expire(key, 3600); // set ttl 1 hour
+        pipe.hset("jwtcheck", webToken, std::to_string(4))
+            .expire("jwtcheck", 3600); // set ttl 1 hour
 
         pipe.exec();
+        iwReq.webToken = webToken;
 
-        send(serverIOSkt, webToken.c_str(), webToken.size(), 0);
+        send(serverIOSkt, (char*)&iwReq, sizeof(iwReq), 0);
         recv(serverIOSkt, recvBuf, PACKET_SIZE, 0);
     
+        std::cout << "Success to Check Token in Server" << std::endl;
+
         auto iwRes = reinterpret_cast<IM_WEB_RESPONSE*>(recvBuf);
 
         if (!iwRes->isSuccess) {
             std::cout << "Fail to Check Token in Server" << std::endl;
+
             return false;
         }
 
@@ -103,6 +106,8 @@ public:
         CreateServerProcThread(threadCnt_);
 
         mysqlManager = mysqlManager_;
+
+        return true;
 	}
 
     bool ConnUserRecv() { // 연속 요청 막아두기
@@ -137,7 +142,7 @@ public:
         DWORD dwIoSize = 0;
         bool gqSucces = TRUE;
 
-        while (WorkRun) {
+        while (serverProcRun) {
             gqSucces = GetQueuedCompletionStatus(
                 IOCPHandle,
                 &dwIoSize,
