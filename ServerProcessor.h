@@ -71,25 +71,26 @@ public:
             .set_subject("ServerConnect")
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        std::cout << "웹 토큰 생성 성공" << std::endl;
-
-        if (!redis) {
-            std::cerr << "redis is nullptr!" << std::endl;
-        }
-
         auto pipe = redis->pipeline("jwtcheck");
 
         pipe.hset("jwtcheck", webToken, std::to_string(4))
             .expire("jwtcheck", 3600); // set ttl 1 hour
 
         pipe.exec();
-        std::cout << "파이프로 웹서버 토큰과 pk 전송" << std::endl;
+
+        auto value = redis->hget("jwtcheck", webToken);
+        if (!value) {
+            printf("Error: Redis hget returned nullptr for key: %s\n", webToken.c_str());
+        }
+        else {
+			std::printf("Redis hget returned: %s\n", value.value().c_str());
+        }
 
         iwReq.webToken = webToken;
 
-        std::cout << "웹서버 토큰으로 서버에게 접속 요청" << std::endl;
-
+        std::cout << "아임 웹 send 요청" << std::endl << std::endl;
         send(serverIOSkt, (char*)&iwReq, sizeof(iwReq), 0);
+        std::cout << "아임 웹 recv대기" << std::endl << std::endl;
         recv(serverIOSkt, recvBuf, PACKET_SIZE, 0);
     
         std::cout << "Success to Check Token in Server" << std::endl;
