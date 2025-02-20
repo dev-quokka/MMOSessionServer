@@ -181,7 +181,6 @@ public:
                     }
 
                     ConnUserRecv();
-
                 }
                 else if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LOGOUT_REQUEST) {
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LOGOUT_REQUEST*>(overlappedTCP->wsaBuf.buf);
@@ -191,7 +190,6 @@ public:
                     }
 
                     ConnUserRecv();
-
                 }
             }
 

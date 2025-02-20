@@ -44,7 +44,7 @@ struct USER_GAMESTART_REQUEST : PACKET_HEADER {
 };
 
 struct USER_GAMESTART_RESPONSE : PACKET_HEADER {
-
+	char webToken[MAX_JWT_TOKEN_LEN + 1];
 };
 
 //  ---------------------------- RAID  ----------------------------

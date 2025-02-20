@@ -25,9 +25,6 @@ struct OverlappedEx {
 };
 
 struct OverlappedTCP : OverlappedEx {
-	// 2 bytes
-	short retryCnt = 0; // Retry Count For Send Proc
-
 	// 8 bytes
 	SOCKET userSkt;
 

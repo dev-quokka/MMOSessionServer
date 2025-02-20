@@ -8,6 +8,7 @@
 #include "MySQLManager.h"
 
 constexpr uint16_t serverThreadCnt = 1;
+constexpr uint16_t userThreadCnt = 1;
 
 int main() {
 	std::shared_ptr<sw::redis::RedisCluster> redis;
@@ -33,14 +34,21 @@ int main() {
         return 0;
     }
 
-    // UserProcessor userProcessor;
     ServerProcessor serverProcessor;
+    UserProcessor userProcessor;
 
     if (serverProcessor.init(serverThreadCnt, redis, mysqlManager)) {
         std::cout << "Success To Make ServerProc" << std::endl;
     }
     else {
         std::cout << "Fail To Make ServerProc" << std::endl;
+    }
+
+    if (userProcessor.init(userThreadCnt, redis, mysqlManager)) {
+        std::cout << "Success To Make userProc" << std::endl;
+    }
+    else {
+        std::cout << "Fail To Make userProc" << std::endl;
     }
 
     std::cout << "If You Want Exit, Write web" << std::endl;

@@ -15,7 +15,7 @@
 #include <thread>
 #include <atomic>
 #include <sw/redis++/redis++.h>
-#include <boost/lockfree/queue.hpp>
+//#include <boost/lockfree/queue.hpp>
 
 #include "Packet.h"
 #include "Define.h"
@@ -29,7 +29,7 @@ public:
         if (userProcThread.joinable()) {
             userProcThread.join();
         }
-        CloseHandle(IOCPHandle);
+        CloseHandle(u_IOCPHandle);
         closesocket(userIOSkt);
         WSACleanup();
         std::cout << "userProcThread End" << std::endl;
@@ -70,13 +70,13 @@ public:
             return false;
         }
 
-        IOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, threadCnt_);
-        if (IOCPHandle == NULL) {
+        u_IOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, threadCnt_);
+        if (u_IOCPHandle == NULL) {
             std::cout << "Make Iocp Hande Fail" << std::endl;
             return false;
         }
 
-        auto bIOCPHandle = CreateIoCompletionPort((HANDLE)userIOSkt, IOCPHandle, (uint32_t)0, 0);
+        auto bIOCPHandle = CreateIoCompletionPort((HANDLE)userIOSkt, u_IOCPHandle, (uint32_t)0, 0);
         if (bIOCPHandle == nullptr) {
             std::cout << "Bind Iocp Hande Fail" << std::endl;
             return false;
@@ -98,7 +98,7 @@ public:
         int sendBufSize = PACKET_SIZE;
         setsockopt(userSkt, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufSize, sizeof(sendBufSize));
 
-        auto tIOCPHandle = CreateIoCompletionPort((HANDLE)userSkt, IOCPHandle, (ULONG_PTR)0, 0);
+        auto tIOCPHandle = CreateIoCompletionPort((HANDLE)userSkt, u_IOCPHandle, (ULONG_PTR)0, 0);
 
         if (tIOCPHandle == INVALID_HANDLE_VALUE)
         {
@@ -127,6 +127,9 @@ public:
             DWORD dwFlag = 0;
             DWORD dwRecvBytes = 0;
 
+            recvOvLap = {};
+            memset(recvBuf, 0, sizeof(recvBuf));
+
             recvOvLap.wsaBuf.len = MAX_SOCK;
             recvOvLap.wsaBuf.buf = recvBuf;
             recvOvLap.userSkt = userIOSkt;
@@ -149,13 +152,23 @@ public:
         //}
     }
 
-    void UserSend(){
+    void UserSend(USER_GAMESTART_RESPONSE ugRes){
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
             //sendQueueSize.fetch_sub(1);
 
-            DWORD dwSendBytes = 0;
+        DWORD dwSendBytes = 0;
+
+        memset(sendBuf, 0, sizeof(sendBuf));
+        sendOvLap = {};
+
+        sendOvLap.wsaBuf.len = MAX_SOCK;
+        sendOvLap.wsaBuf.buf = sendBuf;
+		CopyMemory(sendBuf, &ugRes, sizeof(USER_GAMESTART_RESPONSE));
+        sendOvLap.userSkt = userIOSkt;
+        sendOvLap.taskType = TaskType::SEND;
+
             int sCheck = WSASend(userIOSkt,
                 &(sendOvLap.wsaBuf),
                 1,
@@ -168,18 +181,23 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
-    void SendComplete() {
-            UserSend();
-    }
-
     void CreateServerProcThread(int16_t threadCnt_) {
         userProcRun = true;
         userProcThread = std::thread([this]() {WorkRun(); });
     }
 
     bool PostAccept() {
+        std::cout << "포스트 억셉트 시작." << std::endl;
         DWORD bytes = 0;
         DWORD flags = 0;
+
+        memset(acceptBuf, 0, sizeof(acceptBuf));
+        aceeptOvLap = {};
+
+		aceeptOvLap.taskType = TaskType::ACCEPT;
+		aceeptOvLap.userSkt = userSkt;
+		aceeptOvLap.wsaBuf.len = sizeof(acceptBuf);
+		aceeptOvLap.wsaBuf.buf = acceptBuf;
 
         if (AcceptEx(userIOSkt, userSkt, acceptBuf, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytes, (LPWSAOVERLAPPED)&aceeptOvLap) == 0) {
             if (WSAGetLastError() != WSA_IO_PENDING) {
@@ -198,7 +216,7 @@ public:
 
         while (userProcRun) {
             gqSucces = GetQueuedCompletionStatus(
-                IOCPHandle,
+                u_IOCPHandle,
                 &dwIoSize,
                 (PULONG_PTR)&userIOSkt,
                 &lpOverlapped,
@@ -208,11 +226,11 @@ public:
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
 
             if (overlappedTCP->taskType == TaskType::ACCEPT) {
-                recvOvLap = {};
-                memset(recvBuf, 0, sizeof(recvBuf));
+                std::cout << "유저 한명 접속했다." << std::endl;
                 UserRecv();
             }
             else if (overlappedTCP->taskType == TaskType::RECV) {
+                std::cout << "유저한테 정보달라는 요청 받았다." << std::endl;
                 auto k = reinterpret_cast<PACKET_HEADER*>(overlappedTCP->wsaBuf.buf);
                 
                 if (k->PacketId == (uint16_t)WEBPACKET_ID::USER_GAMESTART_REQUEST) {
@@ -228,10 +246,9 @@ public:
                 //sendQueueSize.fetch_add(1);
             }
             else if (overlappedTCP->taskType == TaskType::SEND) {
+                std::cout << "유저한테 정보전달 했다." << std::endl;
                 // 오버랩, 소켓 초기화 후 acceptex 다시 걸기
                 shutdown(userSkt, SD_BOTH);
-                memset(acceptBuf, 0, sizeof(acceptBuf));
-                aceeptOvLap = {};
                 PostAccept();
 
                 //ZeroMemory(overlappedTCP, sizeof(OverlappedTCP)); // Push After Init
@@ -272,10 +289,12 @@ public:
 
         pipe.exec();
 
-        memset(sendBuf, 0, sizeof(sendBuf));
-        sendOvLap = {};
+		USER_GAMESTART_RESPONSE ugRes; 
+		ugRes.PacketId = (UINT16)WEBPACKET_ID::USER_GAMESTART_RESPONSE;
+		ugRes.PacketLength = sizeof(USER_GAMESTART_RESPONSE);
+		strncpy_s(ugRes.webToken, token.c_str(), 256);
 
-        UserSend();
+        UserSend(ugRes);
     }
 
 private:
@@ -288,7 +307,7 @@ private:
 
     SOCKET userSkt;
 
-    HANDLE IOCPHandle;
+    HANDLE u_IOCPHandle;
     std::thread userProcThread;
     MySQLManager* mysqlManager;
 
@@ -302,6 +321,7 @@ private:
     //boost::lockfree::queue<OverlappedTCP*> overLapPool{ MAX_OVERLAP_CNT };
 
     std::string userToken;
+
     char acceptBuf[64] = {0};
     char recvBuf[PACKET_SIZE] = {0};
     char sendBuf[PACKET_SIZE] = { 0 };
