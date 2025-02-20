@@ -1,4 +1,5 @@
 #pragma once
+#pragma comment(lib, "ws2_32.lib") // 비주얼에서 소켓프로그래밍 하기 위한 것
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 9090
@@ -16,8 +17,6 @@
 #include "Packet.h"
 #include "Define.h"
 #include "MySQLManager.h"
-
-#pragma comment(lib, "ws2_32.lib") // 비주얼에서 소켓프로그래밍 하기 위한 것
 
 class ServerProcessor {
 public:
