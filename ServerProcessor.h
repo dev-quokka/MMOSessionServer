@@ -69,16 +69,20 @@ public:
         webToken = jwt::create()
             .set_issuer("web_server")
             .set_subject("ServerConnect")
+            .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{ 3600 }) // 한시간으로 세팅
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        auto pipe = redis->pipeline("jwtcheck");
+        std::string tag = "{webserver}";
+        std::string key = "jwtcheck:" + tag;
 
-        pipe.hset("jwtcheck", webToken, std::to_string(4))
-            .expire("jwtcheck", 3600); // set ttl 1 hour
+        auto pipe = redis->pipeline("{webserver}");
+
+        pipe.hset(key, webToken, std::to_string(4))
+            .expire(key, 3600); // set ttl 1 hour
 
         pipe.exec();
 
-        auto value = redis->hget("jwtcheck", webToken);
+        auto value = redis->hget(key, webToken);
         if (!value) {
             printf("Error: Redis hget returned nullptr for key: %s\n", webToken.c_str());
         }
@@ -86,7 +90,7 @@ public:
 			std::printf("Redis hget returned: %s\n", value.value().c_str());
         }
 
-        iwReq.webToken = webToken;
+		strncpy_s(iwReq.webToken, webToken.c_str(), 256);
 
         std::cout << "아임 웹 send 요청" << std::endl << std::endl;
         send(serverIOSkt, (char*)&iwReq, sizeof(iwReq), 0);
@@ -123,12 +127,13 @@ public:
         return true;
 	}
 
-    bool ConnUserRecv() { // 연속 요청 막아두기
+    bool ConnUserRecv() {
         DWORD dwFlag = 0;
         DWORD dwRecvBytes = 0;
 
-        OverlappedTCP* tempOvLap = new OverlappedTCP;
         ZeroMemory(tempOvLap, sizeof(OverlappedTCP));
+		memset(recvBuf, 0, PACKET_SIZE);   
+
         tempOvLap->wsaBuf.len = MAX_SOCK;
         tempOvLap->wsaBuf.buf = recvBuf;
         tempOvLap->userSkt = serverIOSkt;
@@ -175,9 +180,6 @@ public:
                         std::cout << "Sync UserLevel Success" << std::endl;
                     }
 
-                    delete[] overlappedTCP->wsaBuf.buf;
-                    delete overlappedTCP;
-
                     ConnUserRecv();
 
                 }
@@ -187,9 +189,6 @@ public:
                     if (mysqlManager->SyncUserInfo(pakcet->userPk)) {
                         std::cout << "Sync UserInfo Success" << std::endl;
                     }
-
-                    delete[] overlappedTCP->wsaBuf.buf;
-                    delete overlappedTCP;
 
                     ConnUserRecv();
 
@@ -207,6 +206,8 @@ private:
     SOCKET serverIOSkt;
     HANDLE IOCPHandle;
     MySQLManager* mysqlManager;
+
+    OverlappedTCP* tempOvLap = new OverlappedTCP;
 
     std::thread serverProcThread; 
 

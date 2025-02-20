@@ -52,5 +52,5 @@ int main() {
     }
 
     delete mysqlManager;
-
+    return 0;
 }

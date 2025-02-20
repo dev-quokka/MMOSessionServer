@@ -30,8 +30,8 @@ struct UserInventory {
 class MySQLManager {
 public:
 	~MySQLManager(){
-		std::cout << "MySQL End" << std::endl;
 		mysql_close(ConnPtr);
+		std::cout << "MySQL End" << std::endl;
 	}
 
 	bool Run(std::shared_ptr<sw::redis::RedisCluster> redis_) {
@@ -72,7 +72,7 @@ public:
 		return true;
 	}
 
-	uint32_t GetUserInfoById(std::string userId_) {
+	uint32_t GetPkById(std::string userId_) {
 		std::string query_s = "SELECT id, level, exp, last_login WHERE Users WHERE name = " + userId_;
 
 		const char* Query = &*query_s.begin();
@@ -107,14 +107,14 @@ public:
 		return userInfo.userPk;
 	}
 
-	bool GetUserEquipByPk(uint32_t userPk_) {
+	bool GetUserEquipByPk(std::string userPk_) {
 
-		std::string query_s = "SELECT item_code, position, enhance FROM Equipment WHERE user_pk = " + std::to_string(userPk_);
+		std::string query_s = "SELECT item_code, position, enhance FROM Equipment WHERE user_pk = " + userPk_;
 
 		const char* Query = &*query_s.begin();
 		MysqlResult = mysql_query(ConnPtr, Query);
 
-		std::string tag = "{" + std::to_string(userPk_) + "}";
+		std::string tag = "{" + userPk_ + "}";
 		std::string key = "equipment:" + tag; // user:{pk}
 
 		auto pipe = redis->pipeline(tag);
@@ -134,14 +134,14 @@ public:
 		return true;
 	}
 
-	bool GetUserInvenByPk(uint32_t userPk_) {
+	bool GetUserInvenByPk(std::string userPk_) {
 
-		std::string query_s = "SELECT item_type, item_code, position, enhance FROM Inventory WHERE user_pk = " + std::to_string(userPk_);
+		std::string query_s = "SELECT item_type, item_code, position, enhance FROM Inventory WHERE user_pk = " + userPk_;
 
 		const char* Query = &*query_s.begin();
 		MysqlResult = mysql_query(ConnPtr, Query);
 
-		std::string tag = "{" + std::to_string(userPk_) + "}";
+		std::string tag = "{" + userPk_ + "}";
 		std::string key = "equipment:" + tag; // user:{pk}
 
 		auto pipe = redis->pipeline(tag);
@@ -152,7 +152,7 @@ public:
 				pipe.hset(key, "item_type", Row[0])
 					.hset(key, "item_code", Row[1])
 					.hset(key, "position", Row[2])
-					.hset(key, "enhance", Row[2]);
+					.hset(key, "enhance", Row[3]);
 			}
 			mysql_free_result(Result);
 		}

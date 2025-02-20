@@ -81,34 +81,58 @@ public:
             std::cout << "Bind Iocp Hande Fail" << std::endl;
             return false;
         }
-        
-        for (int i = 0; i < MAX_OVERLAP_CNT; i++) {
-            OverlappedTCP* temp = new OverlappedTCP;
-            overLapPool.push(temp);
+
+        userSkt = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+        if (userSkt == INVALID_SOCKET) {
+            std::cout << "Client socket Error : " << GetLastError() << std::endl;
         }
+
+        // For Reuse Socket Set
+        int optval = 1;
+        setsockopt(userSkt, SOL_SOCKET, SO_REUSEADDR, (char*)&optval, sizeof(optval));
+
+        int recvBufSize = PACKET_SIZE;
+        setsockopt(userSkt, SOL_SOCKET, SO_RCVBUF, (char*)&recvBufSize, sizeof(recvBufSize));
+
+        int sendBufSize = PACKET_SIZE;
+        setsockopt(userSkt, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufSize, sizeof(sendBufSize));
+
+        auto tIOCPHandle = CreateIoCompletionPort((HANDLE)userSkt, IOCPHandle, (ULONG_PTR)0, 0);
+
+        if (tIOCPHandle == INVALID_HANDLE_VALUE)
+        {
+            std::cout << "reateIoCompletionPort()함수 실패 :" << GetLastError() << std::endl;
+        }
+        
+        //for (int i = 0; i < MAX_OVERLAP_CNT; i++) {
+        //    OverlappedTCP* temp = new OverlappedTCP;
+        //    overLapPool.push(temp);
+        //}
 
         redis = redis_;
         mysqlManager = mysqlManager_;
+
+        PostAccept();
 
         return true;
 	}
 
     bool UserRecv() {
-        OverlappedTCP* tempOvLap;
+        //OverlappedTCP* tempOvLap;
 
-        if (overLapPool.pop(tempOvLap)) {
-            sendQueueSize.fetch_sub(1);
+        //if (overLapPool.pop(tempOvLap)) {
+        //    sendQueueSize.fetch_sub(1);
 
             DWORD dwFlag = 0;
             DWORD dwRecvBytes = 0;
 
-            ZeroMemory(tempOvLap, sizeof(OverlappedTCP));
-            tempOvLap->wsaBuf.len = MAX_SOCK;
-            tempOvLap->wsaBuf.buf = recvBuf;
-            tempOvLap->userSkt = userIOSkt;
-            tempOvLap->taskType = TaskType::RECV;
+            recvOvLap.wsaBuf.len = MAX_SOCK;
+            recvOvLap.wsaBuf.buf = recvBuf;
+            recvOvLap.userSkt = userIOSkt;
+            recvOvLap.taskType = TaskType::RECV;
 
-            int tempR = WSARecv(userIOSkt, &(tempOvLap->wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED) & (tempOvLap), NULL);
+            int tempR = WSARecv(userIOSkt, &(recvOvLap.wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED)&(recvOvLap), NULL);
 
             if (tempR == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
             {
@@ -117,42 +141,54 @@ public:
             }
 
             return true;
-        }
+        //}
 
-        else {
-            std::cout << "Recv Fail, OverLapped Pool Full" << std::endl;
-            return false;
-        }
+        //else {
+        //    std::cout << "Recv Fail, OverLapped Pool Full" << std::endl;
+        //    return false;
+        //}
     }
 
     void UserSend(){
-        OverlappedTCP* overlappedTCP;
+        //OverlappedTCP* overlappedTCP;
 
-        if (SendQueue.pop(overlappedTCP)) {
-            sendQueueSize.fetch_sub(1);
+        //if (SendQueue.pop(overlappedTCP)) {
+            //sendQueueSize.fetch_sub(1);
 
             DWORD dwSendBytes = 0;
             int sCheck = WSASend(userIOSkt,
-                &(overlappedTCP->wsaBuf),
+                &(sendOvLap.wsaBuf),
                 1,
                 &dwSendBytes,
                 0,
-                (LPWSAOVERLAPPED)overlappedTCP,
+                (LPWSAOVERLAPPED)&sendOvLap,
                 NULL);
-        }
+        //}
 
-        else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
+        //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
     void SendComplete() {
-        if (sendQueueSize.load() == 1) {
             UserSend();
-        }
     }
 
     void CreateServerProcThread(int16_t threadCnt_) {
         userProcRun = true;
         userProcThread = std::thread([this]() {WorkRun(); });
+    }
+
+    bool PostAccept() {
+        DWORD bytes = 0;
+        DWORD flags = 0;
+
+        if (AcceptEx(userIOSkt, userSkt, acceptBuf, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytes, (LPWSAOVERLAPPED)&aceeptOvLap) == 0) {
+            if (WSAGetLastError() != WSA_IO_PENDING) {
+                std::cout << "AcceptEx Error : " << GetLastError() << std::endl;
+                return false;
+            }
+        }
+
+        return true;
     }
 
     void WorkRun() {
@@ -171,8 +207,12 @@ public:
 
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
 
-            if (overlappedTCP->taskType == TaskType::RECV) {
+            if (overlappedTCP->taskType == TaskType::ACCEPT) {
+                recvOvLap = {};
+                memset(recvBuf, 0, sizeof(recvBuf));
                 UserRecv();
+            }
+            else if (overlappedTCP->taskType == TaskType::RECV) {
                 auto k = reinterpret_cast<PACKET_HEADER*>(overlappedTCP->wsaBuf.buf);
                 
                 if (k->PacketId == (uint16_t)WEBPACKET_ID::USER_GAMESTART_REQUEST) {
@@ -181,69 +221,88 @@ public:
                     std::cout << ugReq->userId << " Game Start Request" << std::endl;
                 }
 
-                ZeroMemory(overlappedTCP,sizeof(OverlappedTCP)); // Push After Init
-                overLapPool.push(overlappedTCP); // Push OverLappedTcp
-                sendQueueSize.fetch_add(1);
+                // 소켓 종료
+
+                //ZeroMemory(overlappedTCP,sizeof(OverlappedTCP)); // Push After Init
+                //overLapPool.push(overlappedTCP); // Push OverLappedTcp
+                //sendQueueSize.fetch_add(1);
             }
-
             else if (overlappedTCP->taskType == TaskType::SEND) {
+                // 오버랩, 소켓 초기화 후 acceptex 다시 걸기
+                shutdown(userSkt, SD_BOTH);
+                memset(acceptBuf, 0, sizeof(acceptBuf));
+                aceeptOvLap = {};
+                PostAccept();
 
-
-                ZeroMemory(overlappedTCP, sizeof(OverlappedTCP)); // Push After Init
-                overLapPool.push(overlappedTCP); // Push OverLappedTcp
-                sendQueueSize.fetch_add(1);
-
-                SendComplete();
+                //ZeroMemory(overlappedTCP, sizeof(OverlappedTCP)); // Push After Init
+                //overLapPool.push(overlappedTCP); // Push OverLappedTcp
+                //sendQueueSize.fetch_add(1);
             }
 
         }
     }
 
     void GameStart(USER_GAMESTART_REQUEST* ugReq) {
-        uint16_t pk = mysqlManager->GetUserInfoById(ugReq->userId);
+        // 레디스 클러스터에 뒤에 {}를 ID로 하면 ID는 한번씩 유저가 바꾸니까 변하지 않는 PK로 설정.
+        uint16_t pk = mysqlManager->GetPkById(ugReq->userId);
 
-        if (mysqlManager->GetUserEquipByPk(pk)) {
+        std::string pk_s = std::to_string(pk);
+
+        if (mysqlManager->GetUserEquipByPk(pk_s)) {
             std::cout << "Insert Equipment Success" << std::endl;
         }
 
-        if (mysqlManager->GetUserInvenByPk(pk)) {
+        if (mysqlManager->GetUserInvenByPk(pk_s)) {
             std::cout << "Insert Inventory Success" << std::endl;
         }
 
         std::string token = jwt::create()
             .set_issuer("web_server")
             .set_subject("Login_check")
+            .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{ 1800 }) // 삼십분으로 세팅
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        std::string tag = "{" + std::to_string(pk) + "}";
-        std::string key = "jwtcheck:" + tag; // user:{pk}
+        std::string tag = "{" + std::string(ugReq->userId) + "}";
+        std::string key = "jwtcheck:" + tag;
 
         auto pipe = redis->pipeline(tag);
 
         pipe.hset(key, token, std::to_string(pk))
-            .expire(key, 3600); // set ttl 1 hour
+            .expire(key, 1800); // set ttl 1 hour
 
         pipe.exec();
+
+        memset(sendBuf, 0, sizeof(sendBuf));
+        sendOvLap = {};
 
         UserSend();
     }
 
 private:
     bool userProcRun = false;
-    std::atomic<uint16_t> sendQueueSize{ 0 };
+    //std::atomic<uint16_t> sendQueueSize{ 0 };
 
     uint16_t threadCnt = 0;
 
 	SOCKET userIOSkt;
+
+    SOCKET userSkt;
+
     HANDLE IOCPHandle;
     std::thread userProcThread;
     MySQLManager* mysqlManager;
 
     std::shared_ptr<sw::redis::RedisCluster> redis;
 
-    boost::lockfree::queue<OverlappedTCP*> SendQueue{ SEND_QUEUE_CNT };
-    boost::lockfree::queue<OverlappedTCP*> overLapPool{ MAX_OVERLAP_CNT };
+    OverlappedTCP aceeptOvLap;
+    OverlappedTCP sendOvLap;
+    OverlappedTCP recvOvLap;
 
-    std::string webToken;
-    char recvBuf[PACKET_SIZE];
+    //boost::lockfree::queue<OverlappedTCP*> SendQueue{ SEND_QUEUE_CNT };
+    //boost::lockfree::queue<OverlappedTCP*> overLapPool{ MAX_OVERLAP_CNT };
+
+    std::string userToken;
+    char acceptBuf[64] = {0};
+    char recvBuf[PACKET_SIZE] = {0};
+    char sendBuf[PACKET_SIZE] = { 0 };
 };

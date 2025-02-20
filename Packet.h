@@ -17,8 +17,10 @@ struct PACKET_HEADER
 
 //  ---------------------------- SYSTEM  ----------------------------
 
+const int MAX_JWT_TOKEN_LEN = 256;
+
 struct IM_WEB_REQUEST : PACKET_HEADER {
-	std::string webToken;
+	char webToken[MAX_JWT_TOKEN_LEN + 1];
 };
 
 struct IM_WEB_RESPONSE : PACKET_HEADER {
@@ -35,8 +37,10 @@ struct SYNCRONIZE_LOGOUT_REQUEST : PACKET_HEADER {
 	uint16_t userPk;
 };
 
+const int MAX_USER_ID_LEN = 32;
+
 struct USER_GAMESTART_REQUEST : PACKET_HEADER {
-	std::string userId;
+	char userId[MAX_USER_ID_LEN + 1];
 };
 
 struct USER_GAMESTART_RESPONSE : PACKET_HEADER {
