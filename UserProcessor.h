@@ -1,15 +1,15 @@
 #pragma once
 #pragma comment(lib, "ws2_32.lib") // 비주얼에서 소켓프로그래밍 하기 위한 것
+#pragma comment(lib,"mswsock.lib") //AcceptEx를 사용하기 위한 것
 
 #define SERVER_IP "127.0.0.1"
-#define TO_USER_PORT 9001
+#define TO_USER_PORT 9091
 #define PACKET_SIZE 1024
 #define SEND_QUEUE_CNT 5
 #define MAX_OVERLAP_CNT 10
 
 #include <jwt-cpp/jwt.h>
 #include <winsock2.h>
-#include <windows.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
 #include <string>
@@ -35,7 +35,6 @@ public:
     }
 
 	bool init(uint16_t threadCnt_, std::shared_ptr<sw::redis::RedisCluster> redis_, MySQLManager* mysqlManager_) {
-        
         WSADATA wsadata;
         int check = 0;
         threadCnt = threadCnt_;
@@ -75,7 +74,7 @@ public:
             return false;
         }
 
-        auto bIOCPHandle = CreateIoCompletionPort((HANDLE)userIOSkt, u_IOCPHandle, (uint32_t)0, 0);
+        auto bIOCPHandle = CreateIoCompletionPort((HANDLE)userIOSkt, u_IOCPHandle, (ULONG_PTR)0, 0);
         if (bIOCPHandle == nullptr) {
             std::cout << "Bind Iocp Hande Fail" << std::endl;
             return false;
@@ -97,6 +96,7 @@ public:
         int sendBufSize = PACKET_SIZE;
         setsockopt(userSkt, SOL_SOCKET, SO_SNDBUF, (char*)&sendBufSize, sizeof(sendBufSize));
 
+
         auto tIOCPHandle = CreateIoCompletionPort((HANDLE)userSkt, u_IOCPHandle, (ULONG_PTR)0, 0);
 
         if (tIOCPHandle == INVALID_HANDLE_VALUE)
@@ -112,6 +112,7 @@ public:
         redis = redis_;
         mysqlManager = mysqlManager_;
 
+        CreateUserProcThread();
         PostAccept();
 
         return true;
@@ -134,11 +135,11 @@ public:
             recvOvLap.userSkt = userIOSkt;
             recvOvLap.taskType = TaskType::RECV;
 
-            int tempR = WSARecv(userIOSkt, &(recvOvLap.wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED)&(recvOvLap), NULL);
+            int tempR = WSARecv(userSkt, &(recvOvLap.wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED)&(recvOvLap), NULL);
 
             if (tempR == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
             {
-                std::cout << userIOSkt << " WSARecv() Fail : " << WSAGetLastError() << std::endl;
+                std::cout << userSkt << " WSARecv() Fail : " << WSAGetLastError() << std::endl;
                 return false;
             }
 
@@ -168,7 +169,7 @@ public:
         sendOvLap.userSkt = userIOSkt;
         sendOvLap.taskType = TaskType::SEND;
 
-            int sCheck = WSASend(userIOSkt,
+            int sCheck = WSASend(userSkt,
                 &(sendOvLap.wsaBuf),
                 1,
                 &dwSendBytes,
@@ -180,7 +181,7 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
-    void CreateServerProcThread(int16_t threadCnt_) {
+    void CreateUserProcThread() {
         userProcRun = true;
         userProcThread = std::thread([this]() {WorkRun(); });
     }
@@ -204,6 +205,7 @@ public:
                 return false;
             }
         }
+		std::cout << "AcceptEx 함수 성공" << std::endl;
 
         return true;
     }
@@ -221,12 +223,20 @@ public:
                 &lpOverlapped,
                 INFINITE
             );
+            std::cout << "겟 큐드 넘어온 수" << std::endl;
 
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
 
+            if (!gqSucces || (dwIoSize == 0 && overlappedTCP->taskType != TaskType::ACCEPT)) { // User Disconnect
+                std::cout << "비정상 종료 감지. 소켓 초기화" << std::endl;
+                shutdown(userSkt, SD_BOTH);
+                PostAccept();
+                continue;
+            }
+
             if (overlappedTCP->taskType == TaskType::ACCEPT) {
-                std::cout << "유저 한명 접속했다." << std::endl;
                 UserRecv();
+                std::cout << "유저 한명 정보 요청 했다." << std::endl;
             }
             else if (overlappedTCP->taskType == TaskType::RECV) {
                 std::cout << "유저한테 정보달라는 요청 받았다." << std::endl;
@@ -261,17 +271,17 @@ public:
     void GameStart(USER_GAMESTART_REQUEST* ugReq) {
         // 레디스 클러스터에 뒤에 {}를 ID로 하면 ID는 한번씩 유저가 바꾸니까 변하지 않는 PK로 설정.
         uint16_t pk = mysqlManager->GetPkById(ugReq->userId);
-
+        std::cout << "유저한테 정보전달 했다. 1" << std::endl;
         std::string pk_s = std::to_string(pk);
 
         if (mysqlManager->GetUserEquipByPk(pk_s)) {
             std::cout << "Insert Equipment Success" << std::endl;
         }
-
+        std::cout << "유저한테 정보전달 했다. 2" << std::endl;
         if (mysqlManager->GetUserInvenByPk(pk_s)) {
             std::cout << "Insert Inventory Success" << std::endl;
         }
-
+        std::cout << "유저한테 정보전달 했다. 3" << std::endl;
         std::string token = jwt::create()
             .set_issuer("web_server")
             .set_subject("Login_check")
@@ -287,12 +297,12 @@ public:
             .expire(key, 1800); // set ttl 1 hour
 
         pipe.exec();
-
+        std::cout << "유저한테 정보전달 했다. 4" << std::endl;
 		USER_GAMESTART_RESPONSE ugRes; 
 		ugRes.PacketId = (UINT16)WEBPACKET_ID::USER_GAMESTART_RESPONSE;
 		ugRes.PacketLength = sizeof(USER_GAMESTART_RESPONSE);
 		strncpy_s(ugRes.webToken, token.c_str(), 256);
-
+        std::cout << "유저한테 정보전달 했다. 5" << std::endl;
         UserSend(ugRes);
     }
 
@@ -303,7 +313,6 @@ private:
     uint16_t threadCnt = 0;
 
 	SOCKET userIOSkt;
-
     SOCKET userSkt;
 
     HANDLE u_IOCPHandle;

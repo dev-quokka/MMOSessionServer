@@ -51,7 +51,8 @@ int main() {
         std::cout << "Fail To Make userProc" << std::endl;
     }
 
-    std::cout << "If You Want Exit, Write web" << std::endl;
+
+    std::cout << "=== If You Want Exit, Write web ===" << std::endl;
     std::string k = "";
 
     while (1) {

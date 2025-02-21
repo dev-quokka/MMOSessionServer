@@ -1,5 +1,6 @@
 #pragma once
 #pragma comment(lib, "ws2_32.lib") // 비주얼에서 소켓프로그래밍 하기 위한 것
+#pragma comment(lib,"mswsock.lib") //AcceptEx를 사용하기 위한 것
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 9090
@@ -57,7 +58,7 @@ public:
 
         connect(serverIOSkt, (SOCKADDR*)&addr, sizeof(addr));
 
-        std::cout << "서버와 연결완료" << std::endl << std::endl;
+        std::cout << "서버와 연결완료" << std::endl;
 
         redis = redis_;
 
@@ -82,18 +83,10 @@ public:
         pipe.exec();
 
         auto value = redis->hget(key, webToken);
-        if (!value) {
-            printf("Error: Redis hget returned nullptr for key: %s\n", webToken.c_str());
-        }
-        else {
-			std::printf("Redis hget returned: %s\n", value.value().c_str());
-        }
 
 		strncpy_s(iwReq.webToken, webToken.c_str(), 256);
 
-        std::cout << "아임 웹 send 요청" << std::endl << std::endl;
         send(serverIOSkt, (char*)&iwReq, sizeof(iwReq), 0);
-        std::cout << "아임 웹 recv대기" << std::endl << std::endl;
         recv(serverIOSkt, recvBuf, PACKET_SIZE, 0);
     
         std::cout << "Success to Check Token in Server" << std::endl;
