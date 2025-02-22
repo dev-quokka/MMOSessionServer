@@ -11,10 +11,12 @@ const uint32_t MAX_RECV_DATA = 8096;
 
 std::string JWT_SECRET = "quokka_lover";
 
+class User;
+
 enum class TaskType {
-	ACCEPT,
-	RECV,
-	SEND
+	ACCEPT = 0,
+	RECV = 1,
+	SEND = 2
 };
 
 struct OverlappedEx {
@@ -26,8 +28,8 @@ struct OverlappedEx {
 
 struct OverlappedTCP : OverlappedEx {
 	// 8 bytes
-	SOCKET userSkt;
-
+	User* user;
+	int a;
 	// 16 bytes
 	WSABUF wsaBuf; // TCP Buffer
 };

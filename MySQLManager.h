@@ -73,7 +73,7 @@ public:
 	}
 
 	uint32_t GetPkById(std::string userId_) {
-		std::string query_s = "SELECT id, level, exp, last_login WHERE Users WHERE name = " + userId_;
+		std::string query_s = "SELECT id, level, exp, last_login From Users WHERE name = '" + userId_+"'";
 
 		const char* Query = &*query_s.begin();
 
@@ -86,11 +86,17 @@ public:
 				userInfo.userPk = (uint32_t)std::stoi(Row[0]);
 				userInfo.userLevel = (uint16_t)std::stoi(Row[1]);
 				userInfo.userExp = (unsigned int)std::stoi(Row[2]);
-				userInfo.lastLogin = std::stoi(Row[3]);
+				userInfo.lastLogin = Row[3];
+				std::cout << userInfo.userPk << std::endl;
+				std::cout << userInfo.userLevel << std::endl;
+				std::cout << userInfo.userExp << std::endl;
+				std::cout << userInfo.lastLogin << std::endl;
 			}
 			mysql_free_result(Result);
 		}
-
+		else {
+			return 0;
+		}
 		std::string tag = "{" + std::to_string(userInfo.userPk) + "}";
 		std::string key = "userinfo:" + tag; // user:{pk}
 
@@ -128,6 +134,9 @@ public:
 			}
 			mysql_free_result(Result);
 		}
+		else {
+			return false;
+		}
 
 		pipe.exec();
 
@@ -136,25 +145,29 @@ public:
 
 	bool GetUserInvenByPk(std::string userPk_) {
 
-		std::string query_s = "SELECT item_type, item_code, position, enhance FROM Inventory WHERE user_pk = " + userPk_;
+		std::string query_s = "SELECT item_type, item_code, position, count FROM Inventory WHERE user_pk = " + userPk_;
 
 		const char* Query = &*query_s.begin();
 		MysqlResult = mysql_query(ConnPtr, Query);
 
 		std::string tag = "{" + userPk_ + "}";
-		std::string key = "equipment:" + tag; // user:{pk}
+		std::string key = "inventory:" + tag; // user:{pk}
 
 		auto pipe = redis->pipeline(tag);
 
 		if (MysqlResult == 0) {
+			std::cout << "Inven" << std::endl;
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
 				pipe.hset(key, "item_type", Row[0])
 					.hset(key, "item_code", Row[1])
 					.hset(key, "position", Row[2])
-					.hset(key, "enhance", Row[3]);
+					.hset(key, "count", Row[3]);
 			}
 			mysql_free_result(Result);
+		}
+		else {
+			return false;
 		}
 
 		pipe.exec();

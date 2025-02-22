@@ -128,7 +128,6 @@ public:
 
         tempOvLap->wsaBuf.len = MAX_SOCK;
         tempOvLap->wsaBuf.buf = recvBuf;
-        tempOvLap->userSkt = serverIOSkt;
         tempOvLap->taskType = TaskType::RECV;
 
         int tempR = WSARecv(serverIOSkt, &(tempOvLap->wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED) & (tempOvLap), NULL);
