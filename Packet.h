@@ -15,6 +15,40 @@ struct PACKET_HEADER
 	uint16_t PacketId;
 };
 
+struct USERINFOPK {
+	uint16_t level;
+	uint32_t pk;
+	unsigned int exp;
+	USERINFOPK() : level(0), pk(0), exp(0) {}
+};
+
+struct USERINFO {
+	uint16_t level;
+	unsigned int exp;
+	USERINFO() : level(0), exp(0) {}
+};
+
+struct EQUIPMENT {
+	uint16_t itemCode;
+	uint16_t position;
+	uint16_t enhance;
+	EQUIPMENT() : itemCode(0), position(0), enhance(0) {}
+};
+
+struct CONSUMABLES {
+	uint16_t itemCode;
+	uint16_t position;
+	uint16_t count;
+	CONSUMABLES() : itemCode(0), position(0), count(0) {}
+};
+
+struct MATERIALS {
+	uint16_t itemCode;
+	uint16_t position;
+	uint16_t count;
+	MATERIALS() : itemCode(0), position(0), count(0) {}
+};
+
 //  ---------------------------- SYSTEM  ----------------------------
 
 const int MAX_JWT_TOKEN_LEN = 256;
@@ -37,6 +71,9 @@ struct SYNCRONIZE_LOGOUT_REQUEST : PACKET_HEADER {
 	uint16_t userPk;
 };
 
+
+//  ---------------------------- WEB  ----------------------------
+
 const int MAX_USER_ID_LEN = 32;
 
 struct USER_GAMESTART_REQUEST : PACKET_HEADER {
@@ -45,6 +82,22 @@ struct USER_GAMESTART_REQUEST : PACKET_HEADER {
 
 struct USER_GAMESTART_RESPONSE : PACKET_HEADER {
 	char webToken[MAX_JWT_TOKEN_LEN + 1];
+};
+
+struct USERINFO_SEND : PACKET_HEADER {
+	USERINFO UserInfo;
+};
+
+struct EQUIPMENT_SEND : PACKET_HEADER {
+	std::vector<EQUIPMENT> Equipments;
+};
+
+struct CONSUMABLES_SEND : PACKET_HEADER {
+	std::vector<CONSUMABLES> Consumables;
+};
+
+struct MATERIALS_SEND : PACKET_HEADER {
+	std::vector<MATERIALS> Materials;
 };
 
 //  ---------------------------- RAID  ----------------------------
@@ -81,7 +134,11 @@ enum class WEBPACKET_ID : uint16_t {
 	USER_LOGIN_REQUEST = 1,
 	USER_LOGIN_RESPONSE = 2,
 	USER_GAMESTART_REQUEST = 3,
-	USER_GAMESTART_RESPONSE = 4
+	USER_GAMESTART_RESPONSE = 4,
+	USERINFO_SEND = 5,
+	EQUIPMENT_SEND = 6,
+	CONSUMABLES_SEND = 7,
+	MATERIALS_SEND = 8,
 };
 
 enum class PACKET_ID : uint16_t {

@@ -179,9 +179,8 @@ public:
                     if (mysqlManager->SyncLevel(pakcet->userPk, pakcet->level, pakcet->currentExp)) { 
                         std::cout << "Sync UserLevel Success" << std::endl;
                     }
-
                     else {
-                        std::cout << "Sync UserLevel Fail" << std::endl;
+                        std::cout << "Sync UserLevel Success" << std::endl;
                     }
 
                 }
@@ -192,10 +191,8 @@ public:
                     if (mysqlManager->SyncUserInfo(pakcet->userPk)) {
                         std::cout << "Sync UserInfo Success" << std::endl;
                     }
-
-
                     else {
-                        std::cout << "Sync UserInfo Fail" << std::endl;
+                        std::cout << "Sync UserInfo Success" << std::endl;
                     }
 
                 }

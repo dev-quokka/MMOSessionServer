@@ -152,7 +152,6 @@ public:
                 //sendQueueSize.fetch_add(1);
             }
             else if (a==2) {
-                std::cout << "User Game Start Req Success" << std::endl;
                 delete[] overlappedTCP->wsaBuf.buf;
                 delete overlappedTCP;
 
@@ -169,29 +168,77 @@ public:
 
     void GameStart(User* tempUser, USER_GAMESTART_REQUEST* ugReq) {
         // 레디스 클러스터에 뒤에 {}를 ID로 하면 ID는 한번씩 유저가 바꾸니까 변하지 않는 PK로 설정.
-        uint16_t pk = mysqlManager->GetPkById(ugReq->userId);
-        if (pk == 0) {
+        USERINFOPK userInfoPk = mysqlManager->GetUserInfoById(ugReq->userId);
+
+        if (userInfoPk.pk == 0) {
             std::cout << "GetPkById() Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
             return;
         }
 
-        std::string pk_s = std::to_string(pk);
+        std::cout << "유저 정보 게임 서버에 업로드 성공" << std::endl;
 
-        if (!mysqlManager->GetUserEquipByPk(pk_s)) {
+        USERINFO userInfo;
+        userInfo.level = userInfoPk.level;
+        userInfo.exp = userInfoPk.exp;
+
+        USERINFO_SEND uiSend;
+        uiSend.PacketId = (UINT16)WEBPACKET_ID::USERINFO_SEND;
+        uiSend.PacketLength = sizeof(USERINFO_SEND);
+        uiSend.UserInfo = userInfo;
+        tempUser->SendUserInfo(uiSend);
+
+        std::string pk_s = std::to_string(userInfoPk.pk);
+
+        std::vector<EQUIPMENT> eq = mysqlManager->GetUserEquipByPk(pk_s);
+
+        if (eq.empty()) {
             std::cout << "GetUserEquipByPk() Get Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
             return;
          }
 
-        if (!mysqlManager->GetUserInvenByPk(pk_s)) {
-            std::cout << "GetUserInvenByPk() Get Fail" << std::endl;
+        EQUIPMENT_SEND eqSend;
+        eqSend.PacketId = (UINT16)WEBPACKET_ID::EQUIPMENT_SEND;
+        eqSend.PacketLength = sizeof(EQUIPMENT_SEND);
+        eqSend.Equipments = eq;
+        tempUser->SendEquipment(eqSend);
+        std::cout << "유저 장비 게임 서버에 아이템 업로드 성공" << std::endl;
+
+
+        std::vector<CONSUMABLES> es = mysqlManager->GetUserConsumablesByPk(pk_s);
+
+        if (es.empty()) {
+            std::cout << "GetUserConsumablesByPk() Get Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
             return;
         }
+
+        CONSUMABLES_SEND csSend;
+        csSend.PacketId = (UINT16)WEBPACKET_ID::USER_GAMESTART_RESPONSE;
+        csSend.PacketLength = sizeof(USER_GAMESTART_RESPONSE);
+        csSend.Consumables = es;
+        tempUser->SendConsumables(csSend);
+        std::cout << "유저 소비 아이템 게임 서버에 업로드 성공" << std::endl;
+
+        std::vector<MATERIALS> em = mysqlManager->GetUserMaterialsByPk(pk_s);
+
+        if (em.empty()) {
+            std::cout << "GetUserMaterialsByPk() Get Fail" << std::endl;
+            tempUser->Reset(u_IOCPHandle);
+            tempUser->PostAccept(userIOSkt, u_IOCPHandle);
+            return;
+        }
+
+        MATERIALS_SEND mtSend;
+        mtSend.PacketId = (UINT16)WEBPACKET_ID::MATERIALS_SEND;
+        mtSend.PacketLength = sizeof(MATERIALS_SEND);
+        mtSend.Materials = em;
+        tempUser->SendMaterials(mtSend);
+        std::cout << "유저 재료 아이템 게임 서버에 업로드 성공" << std::endl;
 
         std::string token = jwt::create()
             .set_issuer("web_server")
@@ -208,11 +255,13 @@ public:
             .expire(key, 15); // set ttl 1 hour
 
         pipe.exec();
+
 		USER_GAMESTART_RESPONSE ugRes; 
 		ugRes.PacketId = (UINT16)WEBPACKET_ID::USER_GAMESTART_RESPONSE;
 		ugRes.PacketLength = sizeof(USER_GAMESTART_RESPONSE);
 		strncpy_s(ugRes.webToken, token.c_str(), 256);
-        tempUser->UserSend(ugRes);
+
+        tempUser->SendGameStart(ugRes);
     }
 
 private:

@@ -87,7 +87,7 @@ public:
         //}
     }
 
-    void UserSend(USER_GAMESTART_RESPONSE ugRes) {
+    void SendUserInfo(USERINFO_SEND uiSend) {
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
@@ -99,7 +99,7 @@ public:
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
         sendOvLap->wsaBuf.len = MAX_SOCK;
         sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
-        CopyMemory(sendOvLap->wsaBuf.buf, &ugRes, sizeof(USER_GAMESTART_RESPONSE));
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&uiSend, sizeof(USER_GAMESTART_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
         sendOvLap->taskType = TaskType::SEND;
@@ -116,6 +116,125 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
+    void SendEquipment(EQUIPMENT_SEND eqSend) {
+        //OverlappedTCP* overlappedTCP;
+
+        //if (SendQueue.pop(overlappedTCP)) {
+            //sendQueueSize.fetch_sub(1);
+
+        DWORD dwSendBytes = 0;
+
+        sendOvLap = new OverlappedTCP;
+        ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
+        sendOvLap->wsaBuf.len = MAX_SOCK;
+        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&eqSend, sizeof(USER_GAMESTART_RESPONSE));
+        sendOvLap->user = this;
+        sendOvLap->a = 2;
+        sendOvLap->taskType = TaskType::SEND;
+
+        int sCheck = WSASend(userSkt,
+            &(sendOvLap->wsaBuf),
+            1,
+            &dwSendBytes,
+            0,
+            (LPWSAOVERLAPPED)sendOvLap,
+            NULL);
+        //}
+
+        //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
+    }
+
+    void SendConsumables(CONSUMABLES_SEND csSend) {
+        //OverlappedTCP* overlappedTCP;
+
+        //if (SendQueue.pop(overlappedTCP)) {
+            //sendQueueSize.fetch_sub(1);
+
+        DWORD dwSendBytes = 0;
+
+        sendOvLap = new OverlappedTCP;
+        ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
+        sendOvLap->wsaBuf.len = MAX_SOCK;
+        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*) & csSend, sizeof(USER_GAMESTART_RESPONSE));
+        sendOvLap->user = this;
+        sendOvLap->a = 2;
+        sendOvLap->taskType = TaskType::SEND;
+
+        int sCheck = WSASend(userSkt,
+            &(sendOvLap->wsaBuf),
+            1,
+            &dwSendBytes,
+            0,
+            (LPWSAOVERLAPPED)sendOvLap,
+            NULL);
+        //}
+
+        //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
+    }
+
+    void SendMaterials(MATERIALS_SEND mtSend) {
+        //OverlappedTCP* overlappedTCP;
+
+        //if (SendQueue.pop(overlappedTCP)) {
+            //sendQueueSize.fetch_sub(1);
+
+        DWORD dwSendBytes = 0;
+
+        sendOvLap = new OverlappedTCP;
+        ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
+        sendOvLap->wsaBuf.len = MAX_SOCK;
+        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*) & mtSend, sizeof(USER_GAMESTART_RESPONSE));
+        sendOvLap->user = this;
+        sendOvLap->a = 2;
+        sendOvLap->taskType = TaskType::SEND;
+
+        int sCheck = WSASend(userSkt,
+            &(sendOvLap->wsaBuf),
+            1,
+            &dwSendBytes,
+            0,
+            (LPWSAOVERLAPPED)sendOvLap,
+            NULL);
+
+        std::cout << "User Game Start Req Success" << std::endl;
+        //}
+
+        //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
+    }
+
+    void SendGameStart(USER_GAMESTART_RESPONSE ugRes) {
+        //OverlappedTCP* overlappedTCP;
+
+        //if (SendQueue.pop(overlappedTCP)) {
+            //sendQueueSize.fetch_sub(1);
+
+        DWORD dwSendBytes = 0;
+
+        sendOvLap = new OverlappedTCP;
+        ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
+        sendOvLap->wsaBuf.len = MAX_SOCK;
+        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&ugRes, sizeof(USER_GAMESTART_RESPONSE));
+        sendOvLap->user = this;
+        sendOvLap->a = 2;
+        sendOvLap->taskType = TaskType::SEND;
+
+        int sCheck = WSASend(userSkt,
+            &(sendOvLap->wsaBuf),
+            1,
+            &dwSendBytes,
+            0,
+            (LPWSAOVERLAPPED)sendOvLap,
+            NULL);
+
+        std::cout << "User Game Start Req Success" << std::endl;
+        //}
+
+        //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
+    }
 
     bool PostAccept(SOCKET userIOSkt, HANDLE u_IOCPHandle) {
         DWORD bytes = 0;
