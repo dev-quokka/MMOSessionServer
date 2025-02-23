@@ -126,7 +126,6 @@ public:
             tempUser = overlappedTCP->user;
             int a = overlappedTCP->a;
 
-
             if (!gqSucces || (dwIoSize == 0 && overlappedTCP->taskType != TaskType::ACCEPT)) { // User Disconnect
                 std::cout << "비정상 종료 감지. 소켓 초기화" << std::endl;
                 tempUser->Reset(u_IOCPHandle);
@@ -153,6 +152,7 @@ public:
                 //sendQueueSize.fetch_add(1);
             }
             else if (a==2) {
+                std::cout << "User Game Start Req Success" << std::endl;
                 delete[] overlappedTCP->wsaBuf.buf;
                 delete overlappedTCP;
 
@@ -205,7 +205,7 @@ public:
         auto pipe = redis->pipeline(tag);
 
         pipe.hset(key, token, std::to_string(pk))
-            .expire(key, 1800); // set ttl 1 hour
+            .expire(key, 15); // set ttl 1 hour
 
         pipe.exec();
 		USER_GAMESTART_RESPONSE ugRes; 

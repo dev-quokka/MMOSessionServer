@@ -78,39 +78,38 @@ public:
 		const char* Query = &*query_s.begin();
 
 		MysqlResult = mysql_query(ConnPtr, Query);
-		UserInfo userInfo;
+
+		uint32_t pk_;
 
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
-				userInfo.userPk = (uint32_t)std::stoi(Row[0]);
-				userInfo.userLevel = (uint16_t)std::stoi(Row[1]);
-				userInfo.userExp = (unsigned int)std::stoi(Row[2]);
-				userInfo.lastLogin = Row[3];
-				std::cout << userInfo.userPk << std::endl;
-				std::cout << userInfo.userLevel << std::endl;
-				std::cout << userInfo.userExp << std::endl;
-				std::cout << userInfo.lastLogin << std::endl;
+				pk_ = (uint32_t)std::stoi(Row[0]);
+
+				std::string tag = "{" + std::to_string(pk_) + "}";
+				std::string key = "userinfo:" + tag; // user:{pk}
+
+				auto pipe = redis->pipeline(tag);
+
+				pipe.hset(key, "level", Row[1])
+					.hset(key, "exp", Row[2])
+					.hset(key, "userId", userId_)
+					.hset(key, "lastlogin", Row[3])
+					.expire(key, 3600);
+
+				pipe.exec();
+				//userInfo.userPk = (uint32_t)std::stoi(Row[0]);
+				//userInfo.userLevel = (uint16_t)std::stoi(Row[1]);
+				//userInfo.userExp = (unsigned int)std::stoi(Row[2]);
+				//userInfo.lastLogin = Row[3];
 			}
 			mysql_free_result(Result);
 		}
 		else {
 			return 0;
 		}
-		std::string tag = "{" + std::to_string(userInfo.userPk) + "}";
-		std::string key = "userinfo:" + tag; // user:{pk}
 
-		auto pipe = redis->pipeline(tag);
-
-		pipe.hset(key, "level", std::to_string(userInfo.userLevel))
-			.hset(key, "exp", std::to_string(userInfo.userExp))
-			.hset(key, "userId", userId_)
-			.hset(key, "lastlogin", userInfo.lastLogin)
-			.expire(key, 3600);
-
-		pipe.exec();
-
-		return userInfo.userPk;
+		return pk_;
 	}
 
 	bool GetUserEquipByPk(std::string userPk_) {
@@ -156,7 +155,6 @@ public:
 		auto pipe = redis->pipeline(tag);
 
 		if (MysqlResult == 0) {
-			std::cout << "Inven" << std::endl;
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
 				pipe.hset(key, "item_type", Row[0])

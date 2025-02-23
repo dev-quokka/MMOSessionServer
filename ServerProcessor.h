@@ -48,17 +48,30 @@ public:
             return false;
         }
 
+        IOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, threadCnt);
+
+        if (IOCPHandle == NULL) {
+            std::cout << "Iocp Handle Make Fail" << std::endl;
+            return false;
+        }
+
+        auto bIOCPHandle = CreateIoCompletionPort((HANDLE)serverIOSkt, IOCPHandle, (ULONG_PTR)this, 0);
+        if (bIOCPHandle == nullptr) {
+            std::cout << "Iocp Handle Bind Fail" << std::endl;
+            return false;
+        }
+
         SOCKADDR_IN addr;
         ZeroMemory(&addr, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(SERVER_PORT);
         inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr.s_addr);
 
-        std::cout << "서버 연결중" << std::endl;
+        std::cout << "Connect To Game Server" << std::endl;
 
         connect(serverIOSkt, (SOCKADDR*)&addr, sizeof(addr));
 
-        std::cout << "서버와 연결완료" << std::endl;
+        std::cout << "Connect Game Server Success" << std::endl;
 
         redis = redis_;
 
@@ -78,7 +91,7 @@ public:
         auto pipe = redis->pipeline("{webserver}");
 
         pipe.hset(key, webToken, std::to_string(4))
-            .expire(key, 3600); // set ttl 1 hour
+            .expire(key, 15); // set ttl 1 hour
 
         pipe.exec();
 
@@ -98,21 +111,11 @@ public:
 
             return false;
         }
-
-        IOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, threadCnt);
-        
-        if (IOCPHandle == NULL) {
-            std::cout << "Iocp Handle Make Fail" << std::endl;
-            return false;
-        }
-
-        auto bIOCPHandle = CreateIoCompletionPort((HANDLE)serverIOSkt, IOCPHandle, (uint32_t)0, 0);
-        if (bIOCPHandle == nullptr) {
-            std::cout << "Iocp Handle Bind Fail" << std::endl;
-            return false;
-        }
+        tempOvLap = new OverlappedTCP;
 
         CreateServerProcThread(threadCnt_);
+
+        ConnUserRecv();
 
         mysqlManager = mysqlManager_;
 
@@ -128,9 +131,11 @@ public:
 
         tempOvLap->wsaBuf.len = MAX_SOCK;
         tempOvLap->wsaBuf.buf = recvBuf;
+        tempOvLap->a = 1;
         tempOvLap->taskType = TaskType::RECV;
+        tempOvLap->serverProcessor = this;
 
-        int tempR = WSARecv(serverIOSkt, &(tempOvLap->wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED) & (tempOvLap), NULL);
+        int tempR = WSARecv(serverIOSkt, &(tempOvLap->wsaBuf), 1, &dwRecvBytes, &dwFlag, (LPWSAOVERLAPPED)(tempOvLap), NULL);
 
         if (tempR == SOCKET_ERROR && (WSAGetLastError() != ERROR_IO_PENDING))
         {
@@ -141,7 +146,7 @@ public:
         return true;
     }
 
-    void CreateServerProcThread(int16_t threadCnt_) {
+    void CreateServerProcThread(uint16_t threadCnt_) {
         serverProcRun = true;
         serverProcThread = std::thread([this]() {WorkRun();});
     }
@@ -150,38 +155,52 @@ public:
         LPOVERLAPPED lpOverlapped = NULL;
         DWORD dwIoSize = 0;
         bool gqSucces = TRUE;
+        ULONG_PTR compKey = 0;
 
         while (serverProcRun) {
             gqSucces = GetQueuedCompletionStatus(
                 IOCPHandle,
                 &dwIoSize,
-                (PULONG_PTR)&serverIOSkt,
+                &compKey,
                 &lpOverlapped,
                 INFINITE
             );
 
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
 
-            if (overlappedTCP->taskType == TaskType::RECV) { // 서버로 부터 요청만 받음
+            if (overlappedTCP->a == 1) { // Recv Data From Server Only
+
                 auto k = reinterpret_cast<PACKET_HEADER*>(overlappedTCP->wsaBuf.buf);
+
                 if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LEVEL_REQUEST) {
+                    std::cout << "Get Sync UserLevel" << std::endl;
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LEVEL_REQUEST*>(overlappedTCP->wsaBuf.buf);
                     
                     if (mysqlManager->SyncLevel(pakcet->userPk, pakcet->level, pakcet->currentExp)) { 
                         std::cout << "Sync UserLevel Success" << std::endl;
                     }
 
-                    ConnUserRecv();
+                    else {
+                        std::cout << "Sync UserLevel Fail" << std::endl;
+                    }
+
                 }
                 else if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LOGOUT_REQUEST) {
+                    std::cout << "Get Sync UserInfo" << std::endl;
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LOGOUT_REQUEST*>(overlappedTCP->wsaBuf.buf);
 
                     if (mysqlManager->SyncUserInfo(pakcet->userPk)) {
                         std::cout << "Sync UserInfo Success" << std::endl;
                     }
 
-                    ConnUserRecv();
+
+                    else {
+                        std::cout << "Sync UserInfo Fail" << std::endl;
+                    }
+
                 }
+
+               ConnUserRecv();
             }
 
         }
@@ -196,7 +215,7 @@ private:
     HANDLE IOCPHandle;
     MySQLManager* mysqlManager;
 
-    OverlappedTCP* tempOvLap = new OverlappedTCP;
+    OverlappedTCP* tempOvLap;
 
     std::thread serverProcThread; 
 

@@ -136,8 +136,6 @@ public:
             }
         }
 
-        std::cout << "AcceptEx 함수 성공" << std::endl;
-
         return true;
     }
 private:
