@@ -114,6 +114,7 @@ public:
 				equipment.enhance = (uint16_t)std::stoi(Row[2]);
 				Equipments.emplace_back(equipment);
 			}
+
 			pipe.exec();
 			mysql_free_result(Result);
 		}
@@ -182,6 +183,7 @@ public:
 				Material.count = (uint16_t)std::stoi(Row[2]);
 				Materials.emplace_back(Material);
 			}
+
 			pipe.exec();
 			mysql_free_result(Result);
 		}

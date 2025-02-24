@@ -36,6 +36,7 @@ public:
     }
 
     void Reset(HANDLE u_IOCPHandle) {
+        tempPk = 0;
         shutdown(userSkt, SD_BOTH);
         closesocket(userSkt);
         userSkt = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
@@ -50,6 +51,14 @@ public:
         {
             std::cout << "reateIoCompletionPort()함수 실패 :" << GetLastError() << std::endl;
         }
+    }
+
+    void SetPk(uint32_t tempPk_) {
+        tempPk = tempPk_;
+    }
+
+    uint32_t GetPk() {
+        return tempPk;
     }
 
     bool UserRecv() {
@@ -87,7 +96,7 @@ public:
         //}
     }
 
-    void SendUserInfo(USERINFO_SEND uiSend) {
+    void SendUserInfo(USERINFO_RESPONSE uiRes_) {
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
@@ -99,7 +108,7 @@ public:
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
         sendOvLap->wsaBuf.len = MAX_SOCK;
         sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
-        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&uiSend, sizeof(USER_GAMESTART_RESPONSE));
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&uiRes_, sizeof(USERINFO_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
         sendOvLap->taskType = TaskType::SEND;
@@ -116,7 +125,7 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
-    void SendEquipment(EQUIPMENT_SEND eqSend) {
+    void SendEquipment(EQUIPMENT_RESPONSE eqRes_) {
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
@@ -128,7 +137,7 @@ public:
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
         sendOvLap->wsaBuf.len = MAX_SOCK;
         sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
-        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&eqSend, sizeof(USER_GAMESTART_RESPONSE));
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&eqRes_, sizeof(EQUIPMENT_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
         sendOvLap->taskType = TaskType::SEND;
@@ -145,7 +154,7 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
-    void SendConsumables(CONSUMABLES_SEND csSend) {
+    void SendConsumables(CONSUMABLES_RESPONSE csRes_) {
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
@@ -157,7 +166,7 @@ public:
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
         sendOvLap->wsaBuf.len = MAX_SOCK;
         sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
-        CopyMemory(sendOvLap->wsaBuf.buf, (char*) & csSend, sizeof(USER_GAMESTART_RESPONSE));
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&csRes_, sizeof(CONSUMABLES_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
         sendOvLap->taskType = TaskType::SEND;
@@ -174,7 +183,7 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
-    void SendMaterials(MATERIALS_SEND mtSend) {
+    void SendMaterials(MATERIALS_RESPONSE mtRes_) {
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
@@ -186,7 +195,7 @@ public:
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
         sendOvLap->wsaBuf.len = MAX_SOCK;
         sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
-        CopyMemory(sendOvLap->wsaBuf.buf, (char*) & mtSend, sizeof(USER_GAMESTART_RESPONSE));
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&mtRes_, sizeof(MATERIALS_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
         sendOvLap->taskType = TaskType::SEND;
@@ -205,7 +214,7 @@ public:
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
     }
 
-    void SendGameStart(USER_GAMESTART_RESPONSE ugRes) {
+    void SendGameStart(USER_GAMESTART_RESPONSE ugRes_) {
         //OverlappedTCP* overlappedTCP;
 
         //if (SendQueue.pop(overlappedTCP)) {
@@ -217,9 +226,9 @@ public:
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
         sendOvLap->wsaBuf.len = MAX_SOCK;
         sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
-        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&ugRes, sizeof(USER_GAMESTART_RESPONSE));
+        CopyMemory(sendOvLap->wsaBuf.buf, (char*)&ugRes_, sizeof(USER_GAMESTART_RESPONSE));
         sendOvLap->user = this;
-        sendOvLap->a = 2;
+        sendOvLap->a = 3;
         sendOvLap->taskType = TaskType::SEND;
 
         int sCheck = WSASend(userSkt,
@@ -257,7 +266,9 @@ public:
 
         return true;
     }
+
 private:
+    uint32_t tempPk;
 	SOCKET userSkt;
 
     OverlappedTCP aceeptOvLap;
