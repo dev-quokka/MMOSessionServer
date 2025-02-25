@@ -198,33 +198,29 @@ public:
     }
 
     void GetUserInfo(User* tempUser, USERINFO_REQUEST* uiReq) { // 레디스 클러스터에 뒤에 {}를 ID로 하면 ID는 한번씩 유저가 바꾸니까 변하지 않는 PK로 설정.
-        USERINFOPK userInfoPk = mysqlManager->GetUserInfoById(uiReq->userId);
+        std::pair<uint32_t,USERINFO> userInfoPk = mysqlManager->GetUserInfoById(uiReq->userId);
 
-        if (userInfoPk.pk == 0) {
+        if (userInfoPk.first == 0) { // 0번 pk를 받으면 실패
             std::cout << "GetUserInfo Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
             return;
         }
 
-        USERINFO userInfo;
-        userInfo.exp = userInfoPk.exp;
-        userInfo.level = userInfoPk.level;
-
-        tempUser->SetPk(userInfoPk.pk);
+        tempUser->SetPk(userInfoPk.first);
         USERINFO_RESPONSE uiRes;
         uiRes.PacketId = (UINT16)WEBPACKET_ID::USERINFO_RESPONSE;
         uiRes.PacketLength = sizeof(USERINFO_RESPONSE);
-        uiRes.UserInfo = userInfo;
+        uiRes.UserInfo = userInfoPk.second;
         tempUser->SendUserInfo(uiRes);
         std::cout << "유저 정보 게임 서버에 업로드 성공" << std::endl;
     }
 
     void GetEquipment(User* tempUser) {
 
-        std::vector<EQUIPMENT> eq = mysqlManager->GetUserEquipByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
+        std::pair<uint16_t, char*> eq = mysqlManager->GetUserEquipByPk(std::to_string(tempUser->GetPk()));
 
-        if (eq.empty()) {
+        if (eq.first==100) { // 100을 받으면 인벤토리 Get 실패
             std::cout << "GetUserEquip Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
@@ -234,18 +230,18 @@ public:
         EQUIPMENT_RESPONSE eqSend;
         eqSend.PacketId = (UINT16)WEBPACKET_ID::EQUIPMENT_RESPONSE;
         eqSend.PacketLength = sizeof(EQUIPMENT_RESPONSE);
-        eqSend.eqCount = eq.size();
-        eqSend.Equipments = eq;
+        eqSend.eqCount = eq.first;
+        std::memcpy(eqSend.Equipments, eq.second, MAX_INVEN_SIZE + 1);
         tempUser->SendEquipment(eqSend);
-        std::cout << eqSend.eqCount << std::endl;
         std::cout << "유저 장비 게임 서버에 아이템 업로드 성공" << std::endl;
+        delete[] eq.second;
     }
 
     void GetConsumables(User* tempUser) {
 
-        std::vector<CONSUMABLES> es = mysqlManager->GetUserConsumablesByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
+        std::pair<uint16_t, char*> es = mysqlManager->GetUserConsumablesByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
 
-        if (es.empty()) {
+        if (es.first == 100) {
             std::cout << "GetUserConsumables Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
@@ -255,17 +251,18 @@ public:
         CONSUMABLES_RESPONSE csSend;
         csSend.PacketId = (UINT16)WEBPACKET_ID::CONSUMABLES_RESPONSE;
         csSend.PacketLength = sizeof(CONSUMABLES_RESPONSE);
-        csSend.csCount = es.size();
-        csSend.Consumables = es;
+        csSend.csCount = es.first;
+        std::memcpy(csSend.Consumables, es.second, MAX_INVEN_SIZE + 1);
         tempUser->SendConsumables(csSend);
         std::cout << "유저 소비 아이템 게임 서버에 업로드 성공" << std::endl;
+        delete[] es.second;
     }
 
     void GetMaterials(User* tempUser) {
          
-        std::vector<MATERIALS> em = mysqlManager->GetUserMaterialsByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
+        std::pair<uint16_t, char*> em = mysqlManager->GetUserMaterialsByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
 
-        if (em.empty()) {
+        if (em.first == 100) {
             std::cout << "GetUserMaterials Fail" << std::endl;
             tempUser->Reset(u_IOCPHandle);
             tempUser->PostAccept(userIOSkt, u_IOCPHandle);
@@ -275,22 +272,14 @@ public:
         MATERIALS_RESPONSE mtSend;
         mtSend.PacketId = (UINT16)WEBPACKET_ID::MATERIALS_RESPONSE;
         mtSend.PacketLength = sizeof(MATERIALS_RESPONSE);
-        mtSend.mtCount = em.size();
-        mtSend.Materials = em;
+        mtSend.mtCount = em.first;
+        std::memcpy(mtSend.Materials, em.second, MAX_INVEN_SIZE + 1);
         tempUser->SendMaterials(mtSend);
         std::cout << "유저 재료 아이템 게임 서버에 업로드 성공" << std::endl;
+        delete[] em.second;
     }
 
     void GameStart(User* tempUser, USER_GAMESTART_REQUEST* ugReq) {
-        // 레디스 클러스터에 뒤에 {}를 ID로 하면 ID는 한번씩 유저가 바꾸니까 변하지 않는 PK로 설정.
-        USERINFOPK userInfoPk = mysqlManager->GetUserInfoById(ugReq->userId);
-
-        if (userInfoPk.pk == 0) {
-            std::cout << "GameStart Fail" << std::endl;
-            tempUser->Reset(u_IOCPHandle);
-            tempUser->PostAccept(userIOSkt, u_IOCPHandle);
-            return;
-        }
 
         std::string token = jwt::create()
             .set_issuer("web_server")

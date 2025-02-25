@@ -52,23 +52,24 @@ public:
 		return true;
 	}
 
-	USERINFOPK GetUserInfoById(std::string userId_) {
+std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_) {
 		std::string query_s = "SELECT id, level, exp, last_login From Users WHERE name = '" + userId_+"'";
 
 		const char* Query = &*query_s.begin();
 
 		MysqlResult = mysql_query(ConnPtr, Query);
 
-		USERINFOPK userInfo;
+		USERINFO userInfo;
+		uint32_t pk_;
 
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
-				userInfo.pk = (uint32_t)std::stoi(Row[0]);
+				pk_ = (uint32_t)std::stoi(Row[0]);
 				userInfo.level = (uint16_t)std::stoi(Row[1]);
 				userInfo.exp = (unsigned int)std::stoi(Row[2]);
 
-				std::string tag = "{" + std::to_string(userInfo.pk) + "}";
+				std::string tag = "{" + std::to_string(pk_) + "}";
 				std::string key = "userinfo:" + tag; // user:{pk}
 
 				auto pipe = redis->pipeline(tag);
@@ -84,111 +85,116 @@ public:
 			mysql_free_result(Result);
 		}
 
-		return userInfo;
+		return { pk_, userInfo };
 	}
-
-	std::vector<EQUIPMENT> GetUserEquipByPk(std::string userPk_) {
+	
+	std::pair<uint16_t, char*> GetUserEquipByPk(std::string userPk_) {
 
 		std::string query_s = "SELECT item_code, position, enhance FROM Equipment WHERE user_pk = " + userPk_;
 
 		const char* Query = &*query_s.begin();
 		MysqlResult = mysql_query(ConnPtr, Query);
 
-		std::vector<EQUIPMENT> Equipments;
+		// std::vector<EQUIPMENT> Equipments;
 
 		std::string tag = "{" + userPk_ + "}";
 		std::string key = "equipment:" + tag; // user:{pk}
 
-		auto pipe = redis->pipeline(tag);
+		char* tempC = new char[MAX_INVEN_SIZE+1];
+		char* tc = tempC;
+		uint16_t cnt = 0;
 
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
-				pipe.hset(key, "itemcode", Row[0])
-				.hset(key, "position", Row[1])
-				.hset(key, "enhance", Row[2]);
+				redis->hset(key, Row[1], std::string(Row[0]) + "," + std::string(Row[2]));
 
 				EQUIPMENT equipment;
 				equipment.itemCode = (uint16_t)std::stoi(Row[0]);
 				equipment.position = (uint16_t)std::stoi(Row[1]);
 				equipment.enhance = (uint16_t)std::stoi(Row[2]);
-				Equipments.emplace_back(equipment);
+
+				memcpy(tc,(char*)&equipment,sizeof(EQUIPMENT));
+				tc += sizeof(EQUIPMENT);
+				cnt++;
+				//Equipments.emplace_back(equipment);
 			}
 
-			pipe.exec();
 			mysql_free_result(Result);
 		}
 
-		return Equipments;
+		//return Equipments;
+
+		return { cnt, tempC };
 	}
 
-	std::vector<CONSUMABLES> GetUserConsumablesByPk(std::string userPk_) {
+	std::pair<uint16_t, char*> GetUserConsumablesByPk(std::string userPk_) {
 		std::string query_s = "SELECT item_code, position, count FROM Consumables WHERE user_pk = " + userPk_;
 
 		const char* Query = &*query_s.begin();
 		MysqlResult = mysql_query(ConnPtr, Query);
 
-		std::vector<CONSUMABLES> Consumables;
-
 		std::string tag = "{" + userPk_ + "}";
 		std::string key = "inventory:" + tag; // user:{pk}
 
-		auto pipe = redis->pipeline(tag);
+		char* tempC = new char[MAX_INVEN_SIZE + 1];
+		char* tc = tempC;
+		uint16_t cnt = 0;
 
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
-				pipe.hset(key, "item_code", Row[0])
-					.hset(key, "position", Row[1])
-					.hset(key, "count", Row[2]);
+				redis->hset(key, Row[1], std::string(Row[0]) + "," + std::string(Row[2]));
 
 				CONSUMABLES consumable;
 				consumable.itemCode = (uint16_t)std::stoi(Row[0]);
 				consumable.position = (uint16_t)std::stoi(Row[1]);
 				consumable.count = (uint16_t)std::stoi(Row[2]);
-				Consumables.emplace_back(consumable);
+				memcpy(tc, (char*)&consumable, sizeof(CONSUMABLES));
+				tc += sizeof(CONSUMABLES);
+				cnt++;
 			}
-			pipe.exec();
 			mysql_free_result(Result);
 		}
 
-		return Consumables;
+		return { cnt, tempC };
 	}
 
 
-	std::vector<MATERIALS> GetUserMaterialsByPk(std::string userPk_) {
+	std::pair<uint16_t, char*> GetUserMaterialsByPk(std::string userPk_) {
 
 		std::string query_s = "SELECT item_code, position, count FROM Materials WHERE user_pk = " + userPk_;
 
 		const char* Query = &*query_s.begin();
 		MysqlResult = mysql_query(ConnPtr, Query);
 
-		std::vector<MATERIALS> Materials;
-
 		std::string tag = "{" + userPk_ + "}";
 		std::string key = "inventory:" + tag; // user:{pk}
 
-		auto pipe = redis->pipeline(tag);
+
+		char* tempC = new char[MAX_INVEN_SIZE + 1];
+		char* tc = tempC;
+		uint16_t cnt = 0;
 
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
-				pipe.hset(key, "item_code", Row[0])
-					.hset(key, "position", Row[1])
-					.hset(key, "count", Row[2]);
+				redis->hset(key, Row[1], std::string(Row[0]) + "," + std::string(Row[2]));
 
 				MATERIALS Material;
 				Material.itemCode = (uint16_t)std::stoi(Row[0]);
 				Material.position = (uint16_t)std::stoi(Row[1]);
 				Material.count = (uint16_t)std::stoi(Row[2]);
-				Materials.emplace_back(Material);
+
+				memcpy(tc, (char*)&Material, sizeof(MATERIALS));
+				tc += sizeof(MATERIALS);
+				cnt++;
 			}
 
-			pipe.exec();
 			mysql_free_result(Result);
 		}
 
-		return Materials;
+		return { cnt, tempC };
 	}
 
 private:

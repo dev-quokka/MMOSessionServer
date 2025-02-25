@@ -15,13 +15,6 @@ struct PACKET_HEADER
 	uint16_t PacketId;
 };
 
-struct USERINFOPK {
-	uint16_t level;
-	uint32_t pk;
-	unsigned int exp;
-	USERINFOPK() : level(0), pk(0), exp(0) {}
-};
-
 struct USERINFO {
 	uint16_t level;
 	unsigned int exp;
@@ -75,6 +68,7 @@ struct SYNCRONIZE_LOGOUT_REQUEST : PACKET_HEADER {
 //  ---------------------------- WEB  ----------------------------
 
 const int MAX_USER_ID_LEN = 32;
+const int MAX_INVEN_SIZE = 512;
 
 struct USER_GAMESTART_REQUEST : PACKET_HEADER {
 	char userId[MAX_USER_ID_LEN + 1];
@@ -98,7 +92,7 @@ struct EQUIPMENT_REQUEST : PACKET_HEADER {
 
 struct EQUIPMENT_RESPONSE : PACKET_HEADER {
 	uint16_t eqCount;
-	std::vector<EQUIPMENT> Equipments;
+	char Equipments[MAX_INVEN_SIZE+1];
 };
 
 struct CONSUMABLES_REQUEST : PACKET_HEADER {
@@ -107,7 +101,7 @@ struct CONSUMABLES_REQUEST : PACKET_HEADER {
 
 struct CONSUMABLES_RESPONSE : PACKET_HEADER {
 	uint16_t csCount;
-	std::vector<CONSUMABLES> Consumables;
+	char Consumables[MAX_INVEN_SIZE+1];
 };
 
 struct MATERIALS_REQUEST : PACKET_HEADER {
@@ -116,7 +110,7 @@ struct MATERIALS_REQUEST : PACKET_HEADER {
 
 struct MATERIALS_RESPONSE : PACKET_HEADER {
 	uint16_t mtCount;
-	std::vector<MATERIALS> Materials;
+	char Materials[MAX_INVEN_SIZE+1];
 };
 
 //  ---------------------------- RAID  ----------------------------
