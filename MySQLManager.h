@@ -47,9 +47,25 @@ public:
 		return false; 
 	}
 
-	bool SyncUserInfo(uint16_t userPk) {
-	
-		return true;
+	bool SyncUserInfo(uint16_t userPk_) {
+		std::string userInfokey = "userinfo:{" + std::to_string(userPk_) + "}";
+		std::unordered_map<std::string, std::string> userData;
+		redis->hgetall(userInfokey, std::inserter(userData, userData.begin()));
+
+			std::string query_s = "UPDATE USERS SET name = '"+ userData["userId"] +"', exp = " + userData["exp"] +
+			", level = " + userData["level"] +
+			", last_login = current_timestamp WHERE id = " + std::to_string(userPk_);
+
+		const char* Query = query_s.c_str(); // c_str()을 사용하여 C 문자열 변환
+
+		MysqlResult = mysql_query(ConnPtr, Query);
+
+		if (MysqlResult != 0) {
+			std::cerr << "MySQL UPDATE Error: " << mysql_error(ConnPtr) << std::endl;
+			return false;
+		}
+
+		return true; 
 	}
 
 std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_) {

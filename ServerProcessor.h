@@ -119,6 +119,8 @@ public:
 
         mysqlManager = mysqlManager_;
 
+        std::cout << "Game Server Connect" << std::endl;
+
         return true;
 	}
 
@@ -167,6 +169,8 @@ public:
             );
 
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
+
+            std::cout << "½ÌÅ©·Î ¿äÃ» µé¾î¿È" << std::endl;
 
             if (overlappedTCP->a == 1) { // Recv Data From Server Only
 
