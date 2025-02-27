@@ -7,7 +7,10 @@
 #include <vector>
 #include <chrono>
 
-const uint16_t PACKET_ID_SIZE = 57; // Last Packet_ID Num + 1
+const int MAX_USER_ID_LEN = 32;
+const int MAX_JWT_TOKEN_LEN = 256;
+const int MAX_SCORE_SIZE = 256;
+const int MAX_INVEN_SIZE = 512;
 
 struct PACKET_HEADER
 {
@@ -16,35 +19,36 @@ struct PACKET_HEADER
 };
 
 struct USERINFO {
-	uint16_t level;
-	unsigned int exp;
-	USERINFO() : level(0), exp(0) {}
+	uint16_t level = 0;
+	unsigned int exp = 0;
+	unsigned int raidScore = 0;
 };
 
 struct EQUIPMENT {
-	uint16_t itemCode;
-	uint16_t position;
-	uint16_t enhance;
-	EQUIPMENT() : itemCode(0), position(0), enhance(0) {}
+	uint16_t itemCode = 0;
+	uint16_t position = 0;
+	uint16_t enhance = 0;
 };
 
 struct CONSUMABLES {
-	uint16_t itemCode;
-	uint16_t position;
-	uint16_t count;
-	CONSUMABLES() : itemCode(0), position(0), count(0) {}
+	uint16_t itemCode = 0;
+	uint16_t position = 0;
+	uint16_t count = 0;
 };
 
 struct MATERIALS {
-	uint16_t itemCode;
-	uint16_t position;
-	uint16_t count;
-	MATERIALS() : itemCode(0), position(0), count(0) {}
+	uint16_t itemCode = 0;
+	uint16_t position = 0;
+	uint16_t count = 0;
+};
+
+struct RANKING {
+	uint16_t score = 0;
+	char userId[MAX_USER_ID_LEN + 1] = {};
 };
 
 //  ---------------------------- SYSTEM  ----------------------------
 
-const int MAX_JWT_TOKEN_LEN = 256;
 
 struct IM_WEB_REQUEST : PACKET_HEADER {
 	char webToken[MAX_JWT_TOKEN_LEN + 1];
@@ -66,9 +70,6 @@ struct SYNCRONIZE_LOGOUT_REQUEST : PACKET_HEADER {
 
 
 //  ---------------------------- WEB  ----------------------------
-
-const int MAX_USER_ID_LEN = 32;
-const int MAX_INVEN_SIZE = 512;
 
 struct USER_GAMESTART_REQUEST : PACKET_HEADER {
 	char userId[MAX_USER_ID_LEN + 1];

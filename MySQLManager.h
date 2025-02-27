@@ -14,6 +14,29 @@ public:
 		std::cout << "MySQL End" << std::endl;
 	}
 
+	bool SetRankingInRedis() {
+		std::string query_s = "SELECT score,name From Ranking";
+
+		const char* Query = &*query_s.begin();
+
+		MysqlResult = mysql_query(ConnPtr, Query);
+
+		auto pipe = redis->pipeline("ranking");
+
+		if (MysqlResult == 0) {
+			Result = mysql_store_result(ConnPtr);
+			while ((Row = mysql_fetch_row(Result)) != NULL) {
+				pipe.zadd("ranking", std::string(Row[1]), std::stod(Row[0]));
+				pipe.exec();
+			}
+			mysql_free_result(Result);
+		}
+
+		pipe.exec();
+
+		return true;
+	}
+
 	bool Run(std::shared_ptr<sw::redis::RedisCluster> redis_) {
 		redis = redis_;
 
@@ -52,9 +75,10 @@ public:
 		std::unordered_map<std::string, std::string> userData;
 		redis->hgetall(userInfokey, std::inserter(userData, userData.begin()));
 
-			std::string query_s = "UPDATE USERS SET name = '"+ userData["userId"] +"', exp = " + userData["exp"] +
-			", level = " + userData["level"] +
-			", last_login = current_timestamp WHERE id = " + std::to_string(userPk_);
+			std::string query_s = "UPDATE USERS left join Ranking r on USERS.name = r.name SET USERS.name = '"+ userData["userId"] +"', USERS.exp = " + userData["exp"] +
+			", USERS.level = " + userData["level"] +
+			", USERS.last_login = current_timestamp, r.score =" + userData["raidScore"] +
+			" WHERE USERS.id = " + std::to_string(userPk_);
 
 		const char* Query = query_s.c_str(); // c_str()을 사용하여 C 문자열 변환
 
@@ -68,8 +92,8 @@ public:
 		return true; 
 	}
 
-std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_) {
-		std::string query_s = "SELECT id, level, exp, last_login From Users WHERE name = '" + userId_+"'";
+	std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_) {
+		std::string query_s = "SELECT u.id, u.level, u.exp, u.last_login, r.score From Users u left join Ranking r on u.name = r.name WHERE u.name = '" + userId_+"'";
 
 		const char* Query = &*query_s.begin();
 
@@ -84,6 +108,7 @@ std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_) {
 				pk_ = (uint32_t)std::stoi(Row[0]);
 				userInfo.level = (uint16_t)std::stoi(Row[1]);
 				userInfo.exp = (unsigned int)std::stoi(Row[2]);
+				userInfo.raidScore = (unsigned int)std::stoi(Row[4]);
 
 				std::string tag = "{" + std::to_string(pk_) + "}";
 				std::string key = "userinfo:" + tag; // user:{pk}
@@ -94,6 +119,7 @@ std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_) {
 					.hset(key, "exp", Row[2])
 					.hset(key, "userId", userId_)
 					.hset(key, "lastlogin", Row[3])
+					.hset(key, "raidScore", Row[4])
 					.expire(key, 3600);
 
 				pipe.exec();

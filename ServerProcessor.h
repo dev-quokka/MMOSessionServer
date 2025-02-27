@@ -119,6 +119,8 @@ public:
 
         mysqlManager = mysqlManager_;
 
+        mysqlManager->SetRankingInRedis();
+
         std::cout << "Game Server Connect" << std::endl;
 
         return true;
