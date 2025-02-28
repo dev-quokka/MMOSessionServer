@@ -182,12 +182,8 @@ public:
             else if (a==2) {
                 delete[] overlappedTCP->wsaBuf.buf;
                 delete overlappedTCP;
-
-                //ZeroMemory(overlappedTCP, sizeof(OverlappedTCP)); // Push After Init
-                //overLapPool.push(overlappedTCP); // Push OverLappedTcp
-                //sendQueueSize.fetch_add(1);
             }
-            else if (a == 3) {
+            else if (a == 3) { // Last UserInfo Send
                 delete[] overlappedTCP->wsaBuf.buf;
                 delete overlappedTCP;
 
@@ -239,7 +235,7 @@ public:
 
     void GetConsumables(User* tempUser) {
 
-        std::pair<uint16_t, char*> es = mysqlManager->GetUserConsumablesByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
+        std::pair<uint16_t, char*> es = mysqlManager->GetUserConsumablesByPk(std::to_string(tempUser->GetPk()));
 
         if (es.first == 100) {
             std::cout << "GetUserConsumables Fail" << std::endl;
@@ -260,7 +256,7 @@ public:
 
     void GetMaterials(User* tempUser) {
          
-        std::pair<uint16_t, char*> em = mysqlManager->GetUserMaterialsByPk(std::to_string(tempUser->GetPk())); // 30개짜리 크기
+        std::pair<uint16_t, char*> em = mysqlManager->GetUserMaterialsByPk(std::to_string(tempUser->GetPk()));
 
         if (em.first == 100) {
             std::cout << "GetUserMaterials Fail" << std::endl;
@@ -284,7 +280,7 @@ public:
         std::string token = jwt::create()
             .set_issuer("web_server")
             .set_subject("Login_check")
-            .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{ 1800 }) // 삼십분으로 세팅
+            .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{ 1800 }) // Set 10 minutes for reconnect
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
         std::string tag = "{" + std::string(ugReq->userId) + "}";

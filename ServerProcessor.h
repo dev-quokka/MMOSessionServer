@@ -111,6 +111,7 @@ public:
 
             return false;
         }
+
         tempOvLap = new OverlappedTCP;
 
         CreateServerProcThread(threadCnt_);
@@ -171,39 +172,46 @@ public:
             );
 
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
+            int a = overlappedTCP->a;
 
-            std::cout << "½ÌÅ©·Î ¿äÃ» µé¾î¿È" << std::endl;
-
-            if (overlappedTCP->a == 1) { // Recv Data From Server Only
+            if (overlappedTCP->taskType == TaskType::RECV) {
 
                 auto k = reinterpret_cast<PACKET_HEADER*>(overlappedTCP->wsaBuf.buf);
 
-                if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LEVEL_REQUEST) {
-                    std::cout << "Get Sync UserLevel" << std::endl;
-                    auto pakcet = reinterpret_cast<SYNCRONIZE_LEVEL_REQUEST*>(overlappedTCP->wsaBuf.buf);
-                    
-                    if (mysqlManager->SyncLevel(pakcet->userPk, pakcet->level, pakcet->currentExp)) { 
-                        std::cout << "Sync UserLevel Success" << std::endl;
-                    }
-                    else {
-                        std::cout << "Sync UserLevel Success" << std::endl;
-                    }
-
-                }
-                else if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LOGOUT_REQUEST) {
-                    std::cout << "Get Sync UserInfo" << std::endl;
+                if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LOGOUT_REQUEST) {
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LOGOUT_REQUEST*>(overlappedTCP->wsaBuf.buf);
 
                     if (mysqlManager->SyncUserInfo(pakcet->userPk)) {
                         std::cout << "Sync UserInfo Success" << std::endl;
                     }
                     else {
-                        std::cout << "Sync UserInfo Success" << std::endl;
+                        std::cout << "Sync UserInfo Fail" << std::endl;
+                    }
+
+                    if (mysqlManager->SyncEquipment(pakcet->userPk)) {
+                        std::cout << "Sync Equipment Success" << std::endl;
+                    }
+                    else {
+                        std::cout << "Sync Equipment Fail" << std::endl;
+                    }
+
+                    if (mysqlManager->SyncConsumables(pakcet->userPk)) {
+                        std::cout << "Sync Consumables Success" << std::endl;
+                    }
+                    else {
+                        std::cout << "Sync Consumables Fail" << std::endl;
+                    }
+
+                    if (mysqlManager->SyncMaterials(pakcet->userPk)) {
+                        std::cout << "Sync Materials Success" << std::endl;
+                    }
+                    else {
+                        std::cout << "Sync Materials Fail" << std::endl;
                     }
 
                 }
-
                ConnUserRecv();
+
             }
 
         }

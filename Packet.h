@@ -114,36 +114,6 @@ struct MATERIALS_RESPONSE : PACKET_HEADER {
 	char Materials[MAX_INVEN_SIZE+1];
 };
 
-//  ---------------------------- RAID  ----------------------------
-
-struct RAID_HIT_REQUEST : PACKET_HEADER {
-	uint16_t roomNum;
-	uint16_t myNum;
-	unsigned int damage;
-};
-
-struct RAID_HIT_RESPONSE : PACKET_HEADER {
-	unsigned int yourScore;
-	unsigned int currentMobHp;
-};
-
-struct RAID_END_REQUEST : PACKET_HEADER { // Server to USER
-	unsigned int userScore;
-	unsigned int teamScore;
-};
-
-struct RAID_END_RESPONSE : PACKET_HEADER { // User to Server (If Server Get This Packet, Return Room Number)
-
-};
-
-struct RAID_RANKING_REQUEST : PACKET_HEADER {
-	unsigned int startRank;
-};
-
-struct RAID_RANKING_RESPONSE : PACKET_HEADER {
-	std::vector<std::pair<std::string, unsigned int>> reqScore;
-};
-
 enum class WEBPACKET_ID : uint16_t {
 	USER_LOGIN_REQUEST = 1,
 	USER_LOGIN_RESPONSE = 2,

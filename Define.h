@@ -17,22 +17,22 @@ class ServerProcessor;
 enum class TaskType {
 	ACCEPT = 0,
 	RECV = 1,
-	SEND = 2
+	SEND = 2,
+	LASTSEND = 3
 };
 
 struct OverlappedEx {
 	// 4 bytes
-	TaskType taskType; // ACCPET, RECV, SEND INFO
-
+	TaskType taskType; // ACCPET, RECV, SEND, LASTSEND
 	WSAOVERLAPPED wsaOverlapped;
 };
 
 struct OverlappedTCP : OverlappedEx {
+	// 4 bytes
+	int a;
 	// 8 bytes
 	User* user;
 	ServerProcessor* serverProcessor;
-
-	int a;
 	// 16 bytes
 	WSABUF wsaBuf; // TCP Buffer
 };
