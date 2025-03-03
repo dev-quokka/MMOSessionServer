@@ -26,13 +26,16 @@
 class UserProcessor {
 public:
     ~UserProcessor() {
+        delete user;
+        PostQueuedCompletionStatus(u_IOCPHandle, 0, 0, nullptr);
+
         if (userProcThread.joinable()) {
             userProcThread.join();
         }
+
         CloseHandle(u_IOCPHandle);
         closesocket(userIOSkt);
         WSACleanup();
-        delete user;
 
         std::cout << "userProcThread End" << std::endl;
     }
@@ -121,6 +124,11 @@ public:
                 INFINITE
             );
 
+            if (gqSucces && dwIoSize == 0 && lpOverlapped == NULL) { // Server End Request
+                userProcRun = false;
+                continue;
+            }
+
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
 
             tempUser = overlappedTCP->user;
@@ -187,8 +195,8 @@ public:
                 delete[] overlappedTCP->wsaBuf.buf;
                 delete overlappedTCP;
 
-                user->Reset(u_IOCPHandle);
-                user->PostAccept(userIOSkt, u_IOCPHandle);
+                tempUser->Reset(u_IOCPHandle);
+                tempUser->PostAccept(userIOSkt, u_IOCPHandle);
             }
         }
     }

@@ -7,6 +7,8 @@
 
 #pragma comment (lib, "libmysql.lib") // mysql 연동
 
+const uint16_t INVENTORY_SIZE = 11; // 10개면 +1해서 11개로 해두기
+
 class MySQLManager {
 public:
 	~MySQLManager(){
@@ -270,18 +272,21 @@ public:
 
 		// std::vector<EQUIPMENT> Equipments;
 
-		std::string tag = "{" + userPk_ + "}";
-		std::string key = "equipment:" + tag; // user:{pk}
+		std::vector<EQUIPMENT> tempE{ INVENTORY_SIZE };
 
 		char* tempC = new char[MAX_INVEN_SIZE+1];
 		char* tc = tempC;
 		uint16_t cnt = 0;
+
+		std::string tag = "{" + userPk_ + "}";
+		std::string key = "equipment:" + tag; // user:{pk}
 
 		auto pipe = redis->pipeline(tag);
 
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
+				if ((uint16_t)std::stoi(Row[0]) == 0) continue; // 빈칸이면 넘어가기
 				pipe.hset(key, Row[1], std::string(Row[0]) + ":" + std::string(Row[2]));
 
 				EQUIPMENT equipment;
@@ -289,12 +294,13 @@ public:
 				equipment.position = (uint16_t)std::stoi(Row[1]);
 				equipment.enhance = (uint16_t)std::stoi(Row[2]);
 
-				memcpy(tc,(char*)&equipment,sizeof(EQUIPMENT));
+				memcpy(tc, (char*)&tempE[i], sizeof(EQUIPMENT));
 				tc += sizeof(EQUIPMENT);
 				cnt++;
 				//Equipments.emplace_back(equipment);
 			}
 			pipe.exec();
+
 			mysql_free_result(Result);
 		}
 

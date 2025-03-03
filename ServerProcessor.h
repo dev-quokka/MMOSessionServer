@@ -22,9 +22,12 @@
 class ServerProcessor {
 public:
     ~ServerProcessor() {
+     PostQueuedCompletionStatus(IOCPHandle, 0, 0, nullptr);
+
         if (serverProcThread.joinable()) {
             serverProcThread.join();
         }
+
         CloseHandle(IOCPHandle);
         closesocket(serverIOSkt);
         WSACleanup();
@@ -171,10 +174,15 @@ public:
                 INFINITE
             );
 
+            if (gqSucces && dwIoSize == 0 && lpOverlapped == NULL) { // Server End Request
+                serverProcRun = false;
+                continue;
+            }
+
             auto overlappedTCP = (OverlappedTCP*)lpOverlapped;
             int a = overlappedTCP->a;
 
-            if (overlappedTCP->taskType == TaskType::RECV) {
+            if (a==1) {
 
                 auto k = reinterpret_cast<PACKET_HEADER*>(overlappedTCP->wsaBuf.buf);
 

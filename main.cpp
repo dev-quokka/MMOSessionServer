@@ -22,7 +22,7 @@ int main() {
 
         // Redis 클러스터 연결
         redis = std::make_shared<sw::redis::RedisCluster>(connection_options);
-        std::cout << "Redis 클러스터 연결 성공!" << std::endl;
+        std::cout << "Redis Cluster Connect Success !" << std::endl;
 
     }
     catch (const  sw::redis::Error& err) {

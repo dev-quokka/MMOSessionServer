@@ -208,7 +208,6 @@ public:
             (LPWSAOVERLAPPED)sendOvLap,
             NULL);
 
-        std::cout << "User Game Start Req Success" << std::endl;
         //}
 
         //else std::cout << "Send Fail, OverLappend Pool Full" << std::endl;
@@ -239,7 +238,6 @@ public:
             (LPWSAOVERLAPPED)sendOvLap,
             NULL);
 
-        std::cout << tempPk<<" User, Game Start Req Success" << std::endl;
         std::cout << "Waitting New Connection" << std::endl;
         //}
 
