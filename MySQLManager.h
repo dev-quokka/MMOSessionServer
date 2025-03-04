@@ -272,8 +272,6 @@ public:
 
 		// std::vector<EQUIPMENT> Equipments;
 
-		std::vector<EQUIPMENT> tempE{ INVENTORY_SIZE };
-
 		char* tempC = new char[MAX_INVEN_SIZE+1];
 		char* tc = tempC;
 		uint16_t cnt = 0;
@@ -294,7 +292,7 @@ public:
 				equipment.position = (uint16_t)std::stoi(Row[1]);
 				equipment.enhance = (uint16_t)std::stoi(Row[2]);
 
-				memcpy(tc, (char*)&tempE[i], sizeof(EQUIPMENT));
+				memcpy(tc, (char*)&equipment, sizeof(EQUIPMENT));
 				tc += sizeof(EQUIPMENT);
 				cnt++;
 				//Equipments.emplace_back(equipment);
@@ -328,6 +326,7 @@ public:
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
+				if ((uint16_t)std::stoi(Row[0]) == 0) continue; // ºóÄ­ÀÌ¸é ³Ñ¾î°¡±â
 				pipe.hset(key, Row[1], std::string(Row[0]) + ":" + std::string(Row[2]));
 
 				CONSUMABLES consumable;
@@ -367,6 +366,7 @@ public:
 		if (MysqlResult == 0) {
 			Result = mysql_store_result(ConnPtr);
 			while ((Row = mysql_fetch_row(Result)) != NULL) {
+				if ((uint16_t)std::stoi(Row[0]) == 0) continue; // ºóÄ­ÀÌ¸é ³Ñ¾î°¡±â
 				pipe.hset(key, Row[1], std::string(Row[0]) + ":" + std::string(Row[2]));
 
 				MATERIALS Material;
