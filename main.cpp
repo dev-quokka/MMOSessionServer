@@ -52,12 +52,13 @@ int main() {
     }
 
 
-    std::cout << "=== If You Want Exit, Write web ===" << std::endl;
+    std::cout << "=== MMO SESSION SERVER START ===" << std::endl;
+    std::cout << "=== If You Want Exit, Write session ===" << std::endl;
     std::string k = "";
 
     while (1) {
         std::cin >> k;
-        if (k == "web") break;
+        if (k == "session") break;
     }
 
     delete mysqlManager;

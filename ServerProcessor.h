@@ -78,36 +78,35 @@ public:
 
         redis = redis_;
 
-        IM_WEB_REQUEST iwReq;
-        iwReq.PacketId = (UINT16)PACKET_ID::IM_WEB_REQUEST;
-        iwReq.PacketLength = sizeof(IM_WEB_REQUEST);
+        IM_SESSION_REQUEST iwReq;
+        iwReq.PacketId = (UINT16)PACKET_ID::IM_SESSION_REQUEST;
+        iwReq.PacketLength = sizeof(IM_SESSION_REQUEST);
 
-        webToken = jwt::create()
-            .set_issuer("web_server")
+        Token = jwt::create()
+            .set_issuer("session_server")
             .set_subject("ServerConnect")
-            .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{ 3600 }) // 한시간으로 세팅
+            .set_expires_at(std::chrono::system_clock::now() + 
+             std::chrono::seconds{ 1200 })
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
-        std::string tag = "{webserver}";
+        std::string tag = "{sessionserver}";
         std::string key = "jwtcheck:" + tag;
 
-        auto pipe = redis->pipeline("{webserver}");
-
-        pipe.hset(key, webToken, std::to_string(4))
+        auto pipe = redis->pipeline("{sessionserver}");
+        pipe.hset(key, Token, std::to_string(4))
             .expire(key, 15); // set ttl 1 hour
-
         pipe.exec();
 
-        auto value = redis->hget(key, webToken);
+        auto value = redis->hget(key, Token);
 
-		strncpy_s(iwReq.webToken, webToken.c_str(), 256);
+		strncpy_s(iwReq.Token, Token.c_str(), 256);
 
         send(serverIOSkt, (char*)&iwReq, sizeof(iwReq), 0);
         recv(serverIOSkt, recvBuf, PACKET_SIZE, 0);
     
         std::cout << "Success to Check Token in Server" << std::endl;
 
-        auto iwRes = reinterpret_cast<IM_WEB_RESPONSE*>(recvBuf);
+        auto iwRes = reinterpret_cast<IM_SESSION_RESPONSE*>(recvBuf);
 
         if (!iwRes->isSuccess) {
             std::cout << "Fail to Check Token in Server" << std::endl;
@@ -240,7 +239,7 @@ private:
 
     std::shared_ptr<sw::redis::RedisCluster> redis;
 
-    std::string webToken;
+    std::string Token;
 
     char recvBuf[PACKET_SIZE];
 };

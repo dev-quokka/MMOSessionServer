@@ -50,11 +50,11 @@ struct RANKING {
 //  ---------------------------- SYSTEM  ----------------------------
 
 
-struct IM_WEB_REQUEST : PACKET_HEADER {
-	char webToken[MAX_JWT_TOKEN_LEN + 1];
+struct IM_SESSION_REQUEST : PACKET_HEADER {
+	char Token[MAX_JWT_TOKEN_LEN + 1];
 };
 
-struct IM_WEB_RESPONSE : PACKET_HEADER {
+struct IM_SESSION_RESPONSE : PACKET_HEADER {
 	bool isSuccess;
 };
 
@@ -69,14 +69,14 @@ struct SYNCRONIZE_LOGOUT_REQUEST : PACKET_HEADER {
 };
 
 
-//  ---------------------------- WEB  ----------------------------
+//  ---------------------------- SESSION  ----------------------------
 
 struct USER_GAMESTART_REQUEST : PACKET_HEADER {
 	char userId[MAX_USER_ID_LEN + 1];
 };
 
 struct USER_GAMESTART_RESPONSE : PACKET_HEADER {
-	char webToken[MAX_JWT_TOKEN_LEN + 1];
+	char Token[MAX_JWT_TOKEN_LEN + 1];
 };
 
 struct USERINFO_REQUEST : PACKET_HEADER {
@@ -114,7 +114,7 @@ struct MATERIALS_RESPONSE : PACKET_HEADER {
 	char Materials[MAX_INVEN_SIZE+1];
 };
 
-enum class WEBPACKET_ID : uint16_t {
+enum class SESSIONPACKET_ID : uint16_t {
 	USER_LOGIN_REQUEST = 1,
 	USER_LOGIN_RESPONSE = 2,
 	USER_GAMESTART_REQUEST = 3,
@@ -134,8 +134,8 @@ enum class PACKET_ID : uint16_t {
 	USER_CONNECT_REQUEST = 1, // 유저는 2번으로 요청 
 	USER_CONNECT_RESPONSE = 2,
 	USER_LOGOUT_REQUEST = 3, // 유저는 3번으로 요청 
-	IM_WEB_REQUEST = 4, // 유저는 1번으로 요청 
-	IM_WEB_RESPONSE = 5,
+	IM_SESSION_REQUEST = 4, // 유저는 1번으로 요청 
+	IM_SESSION_RESPONSE = 5,
 	USER_FULL_REQUEST = 6, // SERVER TO USER
 	WAITTING_NUMBER_REQUSET = 7, // SERVER TO USER
 
@@ -177,8 +177,8 @@ enum class PACKET_ID : uint16_t {
 	RAID_RANKING_REQUEST = 55, // 유저는 16번으로 요청 
 	RAID_RANKING_RESPONSE = 56,
 
-	// WebServer Syncronizing Packet Id (101~)
-	SYNCRONIZE_LEVEL_REQUEST = 101, // SERVER TO WEB SERVER
-	SYNCRONIZE_LOGOUT_REQUEST = 102, // SERVER TO WEB SERVER
-	SYNCRONIZE_DISCONNECT_REQUEST = 103, // SERVER TO WEB SERVER
+	// SESSIONServer Syncronizing Packet Id (101~)
+	SYNCRONIZE_LEVEL_REQUEST = 101, // SERVER TO SESSION SERVER
+	SYNCRONIZE_LOGOUT_REQUEST = 102, // SERVER TO SESSION SERVER
+	SYNCRONIZE_DISCONNECT_REQUEST = 103, // SERVER TO SESSION SERVER
 };

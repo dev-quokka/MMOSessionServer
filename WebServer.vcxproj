@@ -24,6 +24,7 @@
     <ProjectGuid>{09e44d96-7a62-41a2-b0fd-c49f7a670783}</ProjectGuid>
     <RootNamespace>WebServer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>SessionServer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
