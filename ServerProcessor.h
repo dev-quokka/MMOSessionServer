@@ -3,8 +3,8 @@
 #pragma comment(lib,"mswsock.lib") //AcceptEx를 사용하기 위한 것
 
 #define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 9090
-#define PACKET_SIZE 1024
+#define CENTER_SERVER_PORT 9090
+#define PACKET_SIZE 512
 
 #include <jwt-cpp/jwt.h>
 #include <winsock2.h>
@@ -67,14 +67,14 @@ public:
         SOCKADDR_IN addr;
         ZeroMemory(&addr, sizeof(addr));
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(SERVER_PORT);
+        addr.sin_port = htons(CENTER_SERVER_PORT);
         inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr.s_addr);
 
-        std::cout << "Connect To Game Server" << std::endl;
+        std::cout << "Connect To Center Server" << std::endl;
 
         connect(serverIOSkt, (SOCKADDR*)&addr, sizeof(addr));
 
-        std::cout << "Connect Game Server Success" << std::endl;
+        std::cout << "Connect Center Server Success" << std::endl;
 
         redis = redis_;
 
@@ -110,7 +110,6 @@ public:
 
         if (!iwRes->isSuccess) {
             std::cout << "Fail to Check Token in Server" << std::endl;
-
             return false;
         }
 
@@ -218,9 +217,7 @@ public:
 
                 }
                ConnUserRecv();
-
             }
-
         }
     }
 
