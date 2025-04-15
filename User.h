@@ -69,8 +69,8 @@ public:
 
         recvOvLap = new OverlappedTCP;
         ZeroMemory(recvOvLap, sizeof(OverlappedTCP));
-        recvOvLap->wsaBuf.len = MAX_SOCK;
-        recvOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        recvOvLap->wsaBuf.len = MAX_RECV_DATA;
+        recvOvLap->wsaBuf.buf = new char[MAX_RECV_DATA];
         recvOvLap->user = this;
         recvOvLap->a = 1;
         recvOvLap->taskType = TaskType::RECV;
@@ -103,8 +103,8 @@ public:
 
         sendOvLap = new OverlappedTCP;
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
-        sendOvLap->wsaBuf.len = MAX_SOCK;
-        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        sendOvLap->wsaBuf.len = MAX_RECV_DATA;
+        sendOvLap->wsaBuf.buf = new char[MAX_RECV_DATA];
         CopyMemory(sendOvLap->wsaBuf.buf, (char*)&uiRes_, sizeof(USERINFO_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
@@ -132,8 +132,8 @@ public:
 
         sendOvLap = new OverlappedTCP;
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
-        sendOvLap->wsaBuf.len = MAX_SOCK;
-        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        sendOvLap->wsaBuf.len = MAX_RECV_DATA;
+        sendOvLap->wsaBuf.buf = new char[MAX_RECV_DATA];
         CopyMemory(sendOvLap->wsaBuf.buf, (char*)&eqRes_, sizeof(EQUIPMENT_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
@@ -161,8 +161,8 @@ public:
 
         sendOvLap = new OverlappedTCP;
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
-        sendOvLap->wsaBuf.len = MAX_SOCK;
-        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        sendOvLap->wsaBuf.len = MAX_RECV_DATA;
+        sendOvLap->wsaBuf.buf = new char[MAX_RECV_DATA];
         CopyMemory(sendOvLap->wsaBuf.buf, (char*)&csRes_, sizeof(CONSUMABLES_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
@@ -190,8 +190,8 @@ public:
 
         sendOvLap = new OverlappedTCP;
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
-        sendOvLap->wsaBuf.len = MAX_SOCK;
-        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        sendOvLap->wsaBuf.len = MAX_RECV_DATA;
+        sendOvLap->wsaBuf.buf = new char[MAX_RECV_DATA];
         CopyMemory(sendOvLap->wsaBuf.buf, (char*)&mtRes_, sizeof(MATERIALS_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 2;
@@ -220,8 +220,8 @@ public:
 
         sendOvLap = new OverlappedTCP;
         ZeroMemory(sendOvLap, sizeof(OverlappedTCP));
-        sendOvLap->wsaBuf.len = MAX_SOCK;
-        sendOvLap->wsaBuf.buf = new char[MAX_SOCK];
+        sendOvLap->wsaBuf.len = MAX_RECV_DATA;
+        sendOvLap->wsaBuf.buf = new char[MAX_RECV_DATA];
         CopyMemory(sendOvLap->wsaBuf.buf, (char*)&ugRes_, sizeof(USER_GAMESTART_RESPONSE));
         sendOvLap->user = this;
         sendOvLap->a = 3;

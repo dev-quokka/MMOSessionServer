@@ -39,7 +39,7 @@ public:
 		return true;
 	}
 
-	bool Run(std::shared_ptr<sw::redis::RedisCluster> redis_) {
+	bool init(std::shared_ptr<sw::redis::RedisCluster> redis_) {
 		redis = redis_;
 
 		mysql_init(&Conn);

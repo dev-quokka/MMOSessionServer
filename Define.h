@@ -6,33 +6,27 @@
 #include <mswsock.h>
 #include <cstdint>
 
-const uint32_t MAX_SOCK = 1024; // Set Max Socket Buf
-const uint32_t MAX_RECV_DATA = 8096;
+const uint32_t MAX_RECV_SIZE = 1024; // Set Max Socket Buf
+const uint32_t MAX_CIRCLE_SIZE = 1024;
 
 std::string JWT_SECRET = "quokka_lover";
 
-class User;
-class ServerProcessor;
+//  ---------------------------- SYSTEM  ----------------------------
 
 enum class TaskType {
-	ACCEPT = 0,
-	RECV = 1,
-	SEND = 2,
-	LASTSEND = 3
+	ACCEPT,
+	RECV,
+	SEND,
+	NEWRECV,
+	NEWSEND
 };
 
 struct OverlappedEx {
-	// 4 bytes
-	TaskType taskType; // ACCPET, RECV, SEND, LASTSEND
 	WSAOVERLAPPED wsaOverlapped;
-};
-
-struct OverlappedTCP : OverlappedEx {
-	// 4 bytes
-	int a;
-	// 8 bytes
-	User* user;
-	ServerProcessor* serverProcessor;
 	// 16 bytes
-	WSABUF wsaBuf; // TCP Buffer
+	WSABUF wsaBuf;
+	// 4 bytes
+	TaskType taskType;
+	// 2 bytes
+	uint16_t connObjNum;
 };

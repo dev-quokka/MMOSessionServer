@@ -1,6 +1,6 @@
 #pragma once
 #pragma comment(lib, "ws2_32.lib") // 비주얼에서 소켓프로그래밍 하기 위한 것
-#pragma comment(lib,"mswsock.lib") //AcceptEx를 사용하기 위한 것
+#pragma comment(lib,"mswsock.lib") // AcceptEx를 사용하기 위한 것
 
 #define SERVER_IP "127.0.0.1"
 #define CENTER_SERVER_PORT 9090
@@ -27,6 +27,8 @@ public:
         if (serverProcThread.joinable()) {
             serverProcThread.join();
         }
+
+        std::this_thread::sleep_for(std::chrono::seconds(2));
 
         CloseHandle(IOCPHandle);
         closesocket(serverIOSkt);
@@ -79,7 +81,7 @@ public:
         redis = redis_;
 
         IM_SESSION_REQUEST iwReq;
-        iwReq.PacketId = (UINT16)SESSION_ID::IM_SESSION_REQUEST;
+        iwReq.PacketId = (UINT16)PACKET_ID::IM_SESSION_REQUEST;
         iwReq.PacketLength = sizeof(IM_SESSION_REQUEST);
 
         Token = jwt::create()
@@ -135,7 +137,8 @@ public:
         ZeroMemory(tempOvLap, sizeof(OverlappedTCP));
 		memset(recvBuf, 0, PACKET_SIZE);   
 
-        tempOvLap->wsaBuf.len = MAX_SOCK;
+        tempOvLap->wsaBuf.len = 
+            ;
         tempOvLap->wsaBuf.buf = recvBuf;
         tempOvLap->a = 1;
         tempOvLap->taskType = TaskType::RECV;
@@ -184,7 +187,7 @@ public:
 
                 auto k = reinterpret_cast<PACKET_HEADER*>(overlappedTCP->wsaBuf.buf);
 
-                if (k->PacketId == (uint16_t)SESSION_ID::SYNCRONIZE_LOGOUT_REQUEST) {
+                if (k->PacketId == (uint16_t)PACKET_ID::SYNCRONIZE_LOGOUT_REQUEST) {
                     auto pakcet = reinterpret_cast<SYNCRONIZE_LOGOUT_REQUEST*>(overlappedTCP->wsaBuf.buf);
 
                     if (mysqlManager->SyncUserInfo(pakcet->userPk)) {
