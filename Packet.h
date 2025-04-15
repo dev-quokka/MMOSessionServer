@@ -7,10 +7,11 @@
 #include <vector>
 #include <chrono>
 
+#include "LoginUserData.h"
+
 const int MAX_USER_ID_LEN = 32;
 const int MAX_JWT_TOKEN_LEN = 256;
 const int MAX_SCORE_SIZE = 256;
-const int MAX_INVEN_SIZE = 512;
 
 struct DataPacket {
 	uint32_t dataSize;
@@ -34,29 +35,6 @@ struct PACKET_HEADER
 	uint16_t PacketId;
 };
 
-struct USERINFO {
-	uint16_t level = 0;
-	unsigned int exp = 0;
-	unsigned int raidScore = 0;
-};
-
-struct EQUIPMENT {
-	uint16_t itemCode = 0;
-	uint16_t position = 0;
-	uint16_t enhance = 0;
-};
-
-struct CONSUMABLES {
-	uint16_t itemCode = 0;
-	uint16_t position = 0;
-	uint16_t count = 0;
-};
-
-struct MATERIALS {
-	uint16_t itemCode = 0;
-	uint16_t position = 0;
-	uint16_t count = 0;
-};
 
 struct RANKING {
 	uint16_t score = 0;

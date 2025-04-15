@@ -140,6 +140,7 @@
     <ClCompile Include="ConnUsersManager.cpp" />
     <ClCompile Include="LoginServer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MySQLManager.cpp" />
     <ClCompile Include="OverLappedManager.cpp" />
     <ClCompile Include="PacketManager.cpp" />
   </ItemGroup>
@@ -149,6 +150,7 @@
     <ClInclude Include="ConnUsersManager.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="LoginServer.h" />
+    <ClInclude Include="LoginUserData.h" />
     <ClInclude Include="MySQLManager.h" />
     <ClInclude Include="OverLappedManager.h" />
     <ClInclude Include="Packet.h" />

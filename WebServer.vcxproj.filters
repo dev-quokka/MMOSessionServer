@@ -33,6 +33,9 @@
     <ClCompile Include="PacketManager.cpp">
       <Filter>헤더 파일</Filter>
     </ClCompile>
+    <ClCompile Include="MySQLManager.cpp">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Define.h">
@@ -60,6 +63,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="PacketManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginUserData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

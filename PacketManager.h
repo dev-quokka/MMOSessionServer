@@ -11,9 +11,11 @@
 #include <sw/redis++/redis++.h>
 
 #include "Packet.h"
+#include "LoginUserData.h"
 #include "ConnUsersManager.h"
 #include "MySQLManager.h"
-constexpr int MAX_RAID_PACKET_SIZE = 128;
+
+constexpr int MAX_LOGIN_PACKET_SIZE = 128;
 
 class PacketManager {
 public:
@@ -36,8 +38,6 @@ private:
     bool CreatePacketThread(const uint16_t packetThreadCnt_);
     void PacketRun(const uint16_t packetThreadCnt_);
     void PacketThread();
-
-    void MakeRoom(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_);
     void UserDisConnect(uint16_t connObjNum_);
 
     //SYSTEM
@@ -59,7 +59,7 @@ private:
     sw::redis::ConnectionOptions connection_options;
 
     // 136 bytes
-    boost::lockfree::queue<DataPacket> procSktQueue{ MAX_RAID_PACKET_SIZE };
+    boost::lockfree::queue<DataPacket> procSktQueue{ MAX_LOGIN_PACKET_SIZE };
 
     // 80 bytes
     std::unordered_map<uint16_t, RECV_PACKET_FUNCTION> packetIDTable;
