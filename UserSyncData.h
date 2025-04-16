@@ -2,7 +2,7 @@
 #include <cstdint>
 
 const uint16_t MAX_INVEN_SIZE = 512;
-const uint16_t INVENTORY_SIZE = 11; // 10개면 +1해서 11개로 해두기
+const uint16_t INVENTORY_SIZE = 11; // Inventory start from 1 (index 0 is not used)
 
 struct USERINFO {
 	unsigned int raidScore = 0;

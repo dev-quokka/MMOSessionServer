@@ -11,7 +11,7 @@
 #include <sw/redis++/redis++.h>
 
 #include "Packet.h"
-#include "LoginUserData.h"
+#include "UserSyncData.h"
 #include "ConnUsersManager.h"
 #include "MySQLManager.h"
 

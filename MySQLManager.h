@@ -7,7 +7,7 @@
 #include <mysql.h>
 #include <sw/redis++/redis++.h>
 
-#include "LoginUserData.h"
+#include "UserSyncData.h"
 
 class MySQLManager {
 public:

@@ -65,7 +65,7 @@
     <ClInclude Include="PacketManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="LoginUserData.h">
+    <ClInclude Include="UserSyncData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,7 +7,7 @@
 #include <vector>
 #include <chrono>
 
-#include "LoginUserData.h"
+#include "UserSyncData.h"
 
 const int MAX_USER_ID_LEN = 32;
 const int MAX_JWT_TOKEN_LEN = 256;
