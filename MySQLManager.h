@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <mysql.h>
-#include <sw/redis++/redis++.h>
+#include <vector>
 
 #include "UserSyncData.h"
 
@@ -16,22 +16,27 @@ public:
 		std::cout << "MySQL End" << std::endl;
 	}
 
-	bool init(std::shared_ptr<sw::redis::RedisCluster> redis_);
-	bool SetRankingInRedis();
+	// ====================== INITIALIZATION =======================
+	bool init();
+	std::vector<RANKING> SetRankingInRedis();
 
-	std::pair<uint32_t, USERINFO> GetUserInfoById(std::string userId_);
-	std::pair<uint16_t, char*> GetUserEquipByPk(std::string userPk_);
-	std::pair<uint16_t, char*> GetUserConsumablesByPk(std::string userPk_);
-	std::pair<uint16_t, char*> GetUserMaterialsByPk(std::string userPk_);
+
+	// =================== USER LOGIN MANAGEMENT ===================
+	std::pair<uint32_t, LOGIN_USERINFO> GetUserInfoById(std::string userId_);
+	std::vector<EQUIPMENT> GetUserEquipByPk(std::string userPk_);
+	std::vector<CONSUMABLES> GetUserConsumablesByPk(std::string userPk_);
+	std::vector<MATERIALS> GetUserMaterialsByPk(std::string userPk_);
 
 private:
+	// 1096 bytes
 	MYSQL Conn;
-	MYSQL* ConnPtr = NULL;
 
-	std::shared_ptr<sw::redis::RedisCluster> redis;
-
-	MYSQL_RES* Result;
+	// 8 bytes
 	MYSQL_ROW Row;
 
+	MYSQL* ConnPtr = NULL;
+	MYSQL_RES* Result;
+
+	// 4 bytes
 	int MysqlResult;
 };

@@ -142,7 +142,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MySQLManager.cpp" />
     <ClCompile Include="OverLappedManager.cpp" />
-    <ClCompile Include="PacketManager.cpp" />
+    <ClCompile Include="RedisManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CircularBuffer.h" />
@@ -154,7 +154,7 @@
     <ClInclude Include="MySQLManager.h" />
     <ClInclude Include="OverLappedManager.h" />
     <ClInclude Include="Packet.h" />
-    <ClInclude Include="PacketManager.h" />
+    <ClInclude Include="RedisManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

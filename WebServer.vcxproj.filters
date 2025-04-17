@@ -30,7 +30,7 @@
     <ClCompile Include="CircularBuffer.cpp">
       <Filter>헤더 파일</Filter>
     </ClCompile>
-    <ClCompile Include="PacketManager.cpp">
+    <ClCompile Include="RedisManager.cpp">
       <Filter>헤더 파일</Filter>
     </ClCompile>
     <ClCompile Include="MySQLManager.cpp">
@@ -62,7 +62,7 @@
     <ClInclude Include="CircularBuffer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="PacketManager.h">
+    <ClInclude Include="RedisManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="UserSyncData.h">
