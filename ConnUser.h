@@ -1,9 +1,5 @@
 #pragma once
-
-#include <cstdint>
-#include <iostream>
 #include <atomic>
-#include <boost/lockfree/queue.hpp>
 
 #include "Define.h"
 #include "CircularBuffer.h"

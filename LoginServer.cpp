@@ -1,6 +1,6 @@
 #include "LoginServer.h"
 
-// ====================== INITIALIZATION =======================
+// ========================== INITIALIZATION ===========================
 
 bool LoginServer::init(const uint16_t MaxThreadCnt_, int port_) {
     WSADATA wsadata;
@@ -113,7 +113,7 @@ void LoginServer::ServerEnd() {
 }
 
 
-// ======================== CONNECTION =========================
+// ============================ CONNECTION =============================
 
 bool LoginServer::CenterServerConnect() {
     auto centerObj = connUsersManager->FindUser(0);
@@ -145,7 +145,7 @@ bool LoginServer::CenterServerConnect() {
 }
 
 
-// ===================== THREAD MANAGEMENT =====================
+// ========================= THREAD MANAGEMENT =========================
 
 bool LoginServer::CreateWorkThread() {
     WorkRun = true;

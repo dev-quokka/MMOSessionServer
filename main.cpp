@@ -1,6 +1,3 @@
-#pragma once
-#include <iostream>
-
 #include "LoginServer.h"
 #include "MySQLManager.h"
 

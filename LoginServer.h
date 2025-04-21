@@ -2,21 +2,10 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "mswsock.lib")
 
-#include <winsock2.h>
-#include <windows.h>
-#include <cstdint>
-#include <atomic>
-#include <iostream>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <deque>
-#include <queue>
-#include <boost/lockfree/queue.hpp>
 #include <tbb/concurrent_hash_map.h>
 
-#include "Packet.h"
 #include "Define.h"
+#include "Packet.h"
 #include "ConnUser.h"
 #include "OverLappedManager.h"
 #include "ConnUsersManager.h"
