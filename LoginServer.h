@@ -55,6 +55,6 @@ private:
     uint16_t MaxThreadCnt = 0;
 
     // 1 bytes
-    bool WorkRun = false;
-    bool AccepterRun = false;
+    std::atomic<bool>  WorkRun = false;
+    std::atomic<bool>  AccepterRun = false;
 };

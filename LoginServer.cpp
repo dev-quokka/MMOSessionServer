@@ -121,8 +121,8 @@ bool LoginServer::CenterServerConnect() {
     SOCKADDR_IN addr;
     ZeroMemory(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(CENTER_SERVER_PORT);
-    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr.s_addr);
+    addr.sin_port = htons(ServerAddressMap[ServerType::CenterServer].port);
+    inet_pton(AF_INET, ServerAddressMap[ServerType::CenterServer].ip.c_str(), &addr.sin_addr.s_addr);
 
     std::cout << "Connecting to Center Server" << std::endl;
 
@@ -210,8 +210,6 @@ void LoginServer::WorkThread() {
 
             if (connObjNum == 0) { // Auto shutdown if the center server is disconnected
                 std::cout << "Center Server Disconnected" << std::endl;
-                ServerEnd();
-                exit(0);
             }
 
             connUser->Reset(); // Reset 

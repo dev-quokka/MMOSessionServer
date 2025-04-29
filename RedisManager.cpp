@@ -178,10 +178,9 @@ void RedisManager::GetUserInfo(uint16_t connObjNum_, uint16_t packetSize_, char*
     tempUserInfo.raidScore = tempLoginUserInfo.raidScore;
 
     uiRes.UserInfo = tempUserInfo;
+    connUsersManager->FindUser(connObjNum_)->PushSendMsg(sizeof(USERINFO_RESPONSE), (char*)&uiRes);
 
     std::cout << "Successfully uploaded UserInfo to the redis cluster" << std::endl;
-
-    connUsersManager->FindUser(connObjNum_)->PushSendMsg(sizeof(USERINFO_RESPONSE), (char*)&uiRes);
 }
 
 void RedisManager::GetEquipment(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_) {
@@ -330,7 +329,7 @@ void RedisManager::GameStart(uint16_t connObjNum_, uint16_t packetSize_, char* p
             .set_issuer("session_server")
             .set_subject("Login_check")
             .set_expires_at(std::chrono::system_clock::now() +
-                std::chrono::seconds{ 600 })
+                std::chrono::seconds{ 300 })
             .sign(jwt::algorithm::hs256{ JWT_SECRET });
 
         std::string tag = "{" + std::string(ugReq->userId) + "}";
@@ -338,12 +337,14 @@ void RedisManager::GameStart(uint16_t connObjNum_, uint16_t packetSize_, char* p
 
         auto pipe = redis->pipeline(tag);
         pipe.hset(key, token, std::to_string(tempUser->GetPk()))
-            .expire(key, 15); // set ttl 1 hour
+            .expire(key, 300); // set ttl
         pipe.exec();
 
         strncpy_s(ugRes.Token, token.c_str(), 256);
-        connUsersManager->FindUser(connObjNum_)->PushSendMsg(sizeof(USER_GAMESTART_RESPONSE), (char*)&ugRes);
+        connUsersManager->FindUser(connObjNum_)->
+            PushSendMsg(sizeof(USER_GAMESTART_RESPONSE), (char*)&ugRes);
     }
+
     catch (const sw::redis::Error& e) {
         std::cerr << "Redis error : " << e.what() << std::endl;
 

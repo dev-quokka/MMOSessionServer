@@ -9,6 +9,7 @@
 
 #include "Packet.h"
 #include "UserSyncData.h"
+#include "ServerEnum.h"
 #include "ConnUsersManager.h"
 #include "MySQLManager.h"
 
@@ -74,6 +75,6 @@ private:
     uint16_t centerServerObjNum = 0;
 
     // 1 bytes
-    bool redisRun = false;
+    std::atomic<bool>  redisRun = false;
 };
 

@@ -150,6 +150,7 @@
     <ClInclude Include="ConnUsersManager.h" />
     <ClInclude Include="Define.h" />
     <ClInclude Include="LoginServer.h" />
+    <ClInclude Include="ServerEnum.h" />
     <ClInclude Include="UserSyncData.h" />
     <ClInclude Include="MySQLManager.h" />
     <ClInclude Include="OverLappedManager.h" />
