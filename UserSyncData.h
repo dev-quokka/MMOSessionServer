@@ -9,6 +9,9 @@ struct LOGIN_USERINFO {
 	std::string lastLogin = "";
 	unsigned int raidScore = 0;
 	unsigned int exp = 0;
+	int gold = 0;
+	int cash = 0;
+	int mileage = 0;
 	uint16_t level = 0;
 };
 

@@ -23,13 +23,13 @@ std::vector<RANKING> MySQLManager::SetRankingInRedis() {
 	const char* Query = query_s.c_str();
 
 	if (mysql_query(ConnPtr, Query) != 0) {
-		std::cerr << "(MySQL) Query Failed : " << mysql_error(ConnPtr) << std::endl;
+		std::cerr << "(SetRankingInRedis) Query Failed : " << mysql_error(ConnPtr) << std::endl;
 		return tempRanks;
 	}
 
 	Result = mysql_store_result(ConnPtr);
 	if (Result == nullptr) {
-		std::cerr << "(MySQL) Failed to store result : " << mysql_error(ConnPtr) << std::endl;
+		std::cerr << "(SetRankingInRedis) Failed to store result : " << mysql_error(ConnPtr) << std::endl;
 		return tempRanks;
 	}
 
@@ -44,8 +44,8 @@ std::vector<RANKING> MySQLManager::SetRankingInRedis() {
 		}
 		mysql_free_result(Result);
 	}
-	catch (...) { // MySQL or Unknown Error
-		std::cerr << "(MySQL or Unknown Error) Ranking load failed" << std::endl;
+	catch (...) {
+		std::cerr << "(SetRankingInRedis) Ranking load failed" << std::endl;
 		tempRanks.clear();
 		return tempRanks;
 	}
@@ -67,12 +67,12 @@ std::pair<uint32_t, LOGIN_USERINFO> MySQLManager::GetUserInfoById(std::string us
 	}
 
 	std::string query =
-		"SELECT u.id, u.level, u.exp, u.last_login, r.score "
+		"SELECT u.id, u.level, u.exp, u.last_login, r.score, u.gold, u.cash, u.mileage "
 		"FROM Users u LEFT JOIN Ranking r ON u.name = r.name "
 		"WHERE u.name = ?";
 
 	if (mysql_stmt_prepare(stmt, query.c_str(), query.length()) != 0) {
-		std::cerr << "(GetUserInfoById) Prepare failed: " << mysql_stmt_error(stmt) << std::endl;
+		std::cerr << "(GetUserInfoById) Prepare failed : " << mysql_stmt_error(stmt) << std::endl;
 		mysql_stmt_close(stmt);
 		return { 0, userInfo };
 	}
@@ -88,18 +88,18 @@ std::pair<uint32_t, LOGIN_USERINFO> MySQLManager::GetUserInfoById(std::string us
 	bindParam[0].length = &nameLength;
 
 	if (mysql_stmt_bind_param(stmt, bindParam) != 0) {
-		std::cerr << "(GetUserInfoById) Bind failed: " << mysql_stmt_error(stmt) << std::endl;
+		std::cerr << "(GetUserInfoById) Bind failed : " << mysql_stmt_error(stmt) << std::endl;
 		mysql_stmt_close(stmt);
 		return { 0, userInfo };
 	}
 
 	if (mysql_stmt_execute(stmt) != 0) {
-		std::cerr << "(GetUserInfoById) Execution failed: " << mysql_stmt_error(stmt) << std::endl;
+		std::cerr << "(GetUserInfoById) Execution failed : " << mysql_stmt_error(stmt) << std::endl;
 		mysql_stmt_close(stmt);
 		return { 0, userInfo };
 	}
 
-	MYSQL_BIND bindResult[5];
+	MYSQL_BIND bindResult[8];
 	memset(bindResult, 0, sizeof(bindResult));
 
 	unsigned long strLen = 0;
@@ -107,8 +107,11 @@ std::pair<uint32_t, LOGIN_USERINFO> MySQLManager::GetUserInfoById(std::string us
 
 	int tempId = 0;
 	int tempLevel = 0;
-	int tempExp = 0;
-	int tempScore = 0;
+	unsigned int tempExp = 0;
+	unsigned int tempScore = 0;
+	int gold = 0;
+	int cash = 0;
+	int mileage = 0;
 
 	bindResult[0].buffer_type = MYSQL_TYPE_LONG;
 	bindResult[0].buffer = &tempId;
@@ -127,14 +130,23 @@ std::pair<uint32_t, LOGIN_USERINFO> MySQLManager::GetUserInfoById(std::string us
 	bindResult[4].buffer_type = MYSQL_TYPE_LONG;
 	bindResult[4].buffer = &tempScore;
 
+	bindResult[5].buffer_type = MYSQL_TYPE_LONG;
+	bindResult[5].buffer = &gold;
+
+	bindResult[6].buffer_type = MYSQL_TYPE_LONG;
+	bindResult[6].buffer = &cash;
+
+	bindResult[7].buffer_type = MYSQL_TYPE_LONG;
+	bindResult[7].buffer = &mileage;
+
 	if (mysql_stmt_bind_result(stmt, bindResult) != 0) {
-		std::cerr << "(GetUserInfoById) Result bind failed: " << mysql_stmt_error(stmt) << std::endl;
+		std::cerr << "(GetUserInfoById) Result bind failed : " << mysql_stmt_error(stmt) << std::endl;
 		mysql_stmt_close(stmt);
 		return { 0, userInfo };
 	}
 
 	if (mysql_stmt_store_result(stmt) != 0) {
-		std::cerr << "(GetUserInfoById) Store result failed: " << mysql_stmt_error(stmt) << std::endl;
+		std::cerr << "(GetUserInfoById) Store result failed : " << mysql_stmt_error(stmt) << std::endl;
 		mysql_stmt_close(stmt);
 		return { 0, userInfo };
 	}
@@ -146,6 +158,9 @@ std::pair<uint32_t, LOGIN_USERINFO> MySQLManager::GetUserInfoById(std::string us
 			userInfo.exp = (uint32_t)tempExp;
 			userInfo.lastLogin = std::string(loginTimeBuffer, strLen);
 			userInfo.raidScore = (uint32_t)tempScore;
+			userInfo.gold = (int)gold;
+			userInfo.cash = (int)cash;
+			userInfo.mileage = (int)mileage;
 		}
 	}
 	catch (const std::exception& e) {
@@ -162,7 +177,7 @@ std::pair<uint32_t, LOGIN_USERINFO> MySQLManager::GetUserInfoById(std::string us
 
 
 std::vector<EQUIPMENT> MySQLManager::GetUserEquipByPk(std::string userPk_) {
-	
+
 	std::string query_s = "SELECT item_code, position, enhance "
 		"FROM Equipment WHERE user_pk = " + userPk_;
 
@@ -171,8 +186,8 @@ std::vector<EQUIPMENT> MySQLManager::GetUserEquipByPk(std::string userPk_) {
 	const char* Query = query_s.c_str();
 
 	if (mysql_query(ConnPtr, Query) != 0) {
-		std::cerr << "(GetUserEquipByPk) Query Failed: " << mysql_error(ConnPtr) << std::endl;
-		return tempEq ;
+		std::cerr << "(GetUserEquipByPk) Query Failed : " << mysql_error(ConnPtr) << std::endl;
+		return tempEq;
 	}
 
 	try {
@@ -203,7 +218,7 @@ std::vector<EQUIPMENT> MySQLManager::GetUserEquipByPk(std::string userPk_) {
 }
 
 std::vector<CONSUMABLES> MySQLManager::GetUserConsumablesByPk(std::string userPk_) {
-	
+
 	std::string query_s = "SELECT item_code, position, count "
 		"FROM Consumables WHERE user_pk = " + userPk_;
 
@@ -212,7 +227,7 @@ std::vector<CONSUMABLES> MySQLManager::GetUserConsumablesByPk(std::string userPk
 	const char* Query = query_s.c_str();
 
 	if (mysql_query(ConnPtr, Query) != 0) {
-		std::cerr << "(GetUserConsumablesByPk) Query Failed: " << mysql_error(ConnPtr) << std::endl;
+		std::cerr << "(GetUserConsumablesByPk) Query Failed : " << mysql_error(ConnPtr) << std::endl;
 		return tempCs;
 	}
 
@@ -254,7 +269,7 @@ std::vector<MATERIALS> MySQLManager::GetUserMaterialsByPk(std::string userPk_) {
 	const char* Query = query_s.c_str();
 
 	if (mysql_query(ConnPtr, Query) != 0) {
-		std::cerr << "(GetUserMaterialsByPk) Query Failed: " << mysql_error(ConnPtr) << std::endl;
+		std::cerr << "(GetUserMaterialsByPk) Query Failed : " << mysql_error(ConnPtr) << std::endl;
 		return tempMt;
 	}
 
