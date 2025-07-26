@@ -5,6 +5,7 @@
 #include <string>
 #include <mysql.h>
 #include <vector>
+#include <string>
 
 #include "UserSyncData.h"
 
@@ -17,14 +18,16 @@ public:
 
 	// ====================== INITIALIZATION =======================
 	bool init();
+	bool GetEventPassId(); // 현재 진행중인 패스 아이디 가져오기
 	std::vector<RANKING> SetRankingInRedis();
 
 
 	// =================== USER LOGIN MANAGEMENT ===================
-	std::pair<uint32_t, LOGIN_USERINFO> GetUserInfoById(std::string userId_);
-	std::vector<EQUIPMENT> GetUserEquipByPk(std::string userPk_);
-	std::vector<CONSUMABLES> GetUserConsumablesByPk(std::string userPk_);
-	std::vector<MATERIALS> GetUserMaterialsByPk(std::string userPk_);
+	bool GetUserInfoById(std::string& userId_, std::pair<uint32_t, LOGIN_USERINFO>& ulp_);
+	bool GetUserEquipByPk(std::string& userPk_, std::vector<EQUIPMENT>& eq_);
+	bool GetUserConsumablesByPk(std::string& userPk_, std::vector<CONSUMABLES>& cs_);
+	bool GetUserMaterialsByPk(std::string& userPk_, std::vector<MATERIALS>& mt_);
+	bool GetPassDataByPk(std::string& userPk_, std::vector<PASSREWARDNFO>& pri_);
 
 private:
 	// 1096 bytes
@@ -35,6 +38,8 @@ private:
 
 	MYSQL* ConnPtr = NULL;
 	MYSQL_RES* Result;
+
+	std::vector<std::string> passIdVector;
 
 	// 4 bytes
 	int MysqlResult;

@@ -49,6 +49,7 @@ private:
     void GetEquipment(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_);
     void GetConsumables(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_);
     void GetMaterials(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_);
+    void GetPassRewordInfos(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_);
     void GameStart(uint16_t connObjNum_, uint16_t packetSize_, char* pPacket_);
 
     typedef void(RedisManager::* RECV_PACKET_FUNCTION)(uint16_t, uint16_t, char*);

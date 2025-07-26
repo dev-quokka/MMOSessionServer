@@ -36,11 +36,11 @@ public:
 		return isConn;
 	}
 
-	void SetPk(uint16_t userPk_) {
+	void SetPk(uint32_t userPk_) {
 		userPk = userPk_;
 	}
 
-	uint16_t GetPk() {
+	uint32_t GetPk() {
 		return userPk;
 	}
 
@@ -230,9 +230,10 @@ private:
 	HANDLE sIOCPHandle;
 	OverLappedManager* overLappedManager;
 
+	uint32_t userPk;
+
 	// 2 bytes
 	uint16_t connObjNum;
-	uint16_t userPk;
 
 	// 1 bytes
 	bool isConn = false;
